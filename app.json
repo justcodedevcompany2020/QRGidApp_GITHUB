@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "QR_GID",
+    "slug": "qr_gid",
+    "version": "8.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/android_logotwo.png",
+    "splash": {
+      "image": "./assets/splash2.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "config": {
+        "googleMapsApiKey": "AIzaSyAvTddoHzPpejdOPc3kX6-EBvZcAmD_sFg"
+      },
+      "bundleIdentifier": "com.JustCode.QRGIDJ",
+      "buildNumber": "8.0.0"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android_logo.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.a200796a.QR_GIDJ",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAvTddoHzPpejdOPc3kX6-EBvZcAmD_sFg"
+        }
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "versionCode": 8
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ]
+    ],
+    "description": ""
+  }
+}
