@@ -37,7 +37,8 @@
       },
       "permissions": [
         "CAMERA",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
       ],
       "versionCode": 8
     },
@@ -52,6 +53,11 @@
         }
       ]
     ],
-    "description": ""
+    "description": "",
+    "extra": {
+      "eas": {
+        "projectId": "3208cb0b-1a18-4ee9-869e-775f9ca9609a"
+      }
+    }
   }
 }

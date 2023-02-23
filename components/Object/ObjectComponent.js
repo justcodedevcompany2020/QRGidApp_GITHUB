@@ -236,6 +236,7 @@ export default class App extends React.Component {
             ],
             activeTab : 0,
             current_image: this.props.object_data.data.PROPERTIES.MORE_PHOTO.VALUE.length > 0 ? 1 : 0,
+            current_slide_index_for_slider: 0,
             singer_name: '',
             isOpenChangeTerrain: false,
 
@@ -520,7 +521,7 @@ export default class App extends React.Component {
 
         this.focusListener = navigation.addListener("focus", () => {
 
-            this.props.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE = 'https://dl6.ru-music.cc/mp3/60235.mp3'
+            // this.props.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE = 'https://dl6.ru-music.cc/mp3/60235.mp3'
 
             // console.log(this.props.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE, 'this.props.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE')
             // console.log(this.props.object_data.data.PROPERTIES.GPS.VALUE[0], 'this.props.object_data.data.PROPERTIES.GPS.VALUE[0]')
@@ -565,7 +566,9 @@ export default class App extends React.Component {
         if (prevProps.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE !== this.props.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE) {
             console.log(prevProps.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE)
             console.log(this.props.object_data.data.PROPERTIES.AUDIOGUIDE.NAME)
-            this._loadNewPlaybackInstance(false);
+
+            console.log('error tut budet')
+            // this._loadNewPlaybackInstance(false);
         }
     }
 
@@ -2644,6 +2647,42 @@ export default class App extends React.Component {
     }
 
 
+    prevSlide = () =>
+    {
+        let active_slider_index = this.state.current_slide_index_for_slider;
+        let slider_images = this.sliderImages();
+        let new_active_slider_index;
+
+        if (active_slider_index == 0)
+        {
+            new_active_slider_index = slider_images.length -1
+        } else {
+            new_active_slider_index = active_slider_index - 1;
+        }
+
+        this.setState({
+            current_slide_index_for_slider: new_active_slider_index
+        })
+    }
+
+    nextSlide = () =>
+    {
+        let active_slider_index = this.state.current_slide_index_for_slider;
+        let slider_images = this.sliderImages();
+        let new_active_slider_index;
+        if (active_slider_index > slider_images.length -1 )
+        {
+            new_active_slider_index = 0
+        } else {
+            new_active_slider_index = active_slider_index + 1;
+        }
+
+        this.setState({
+            current_slide_index_for_slider: new_active_slider_index
+        })
+    }
+
+
 
     render() {
 
@@ -2696,7 +2735,7 @@ export default class App extends React.Component {
 
                     <View style={{width:'100%', height: 56,  flexDirection:'row', justifyContent:'flex-end', alignItems:'center'}}>
 
-                        <Text style={{color:'white', width:'100%', textAlign:'center'}}>{this.state.current_image} из {this.sliderImages().length}</Text>
+                        <Text style={{color:'white', width:'100%', textAlign:'center'}}>{this.state.current_slide_index_for_slider + 1} из {this.sliderImages().length}</Text>
 
                         <TouchableOpacity
                             style={{width:24, height: 24, marginRight:16, position:'absolute', right:16}}
@@ -2708,6 +2747,34 @@ export default class App extends React.Component {
 
                         </TouchableOpacity>
 
+                    </View>
+
+
+                    <View style={{width: '100%', height: 300}}>
+
+                        <TouchableOpacity
+                            style={{width: 50, height:50, position:'absolute', top:120, left:10, zIndex:9999}}
+                            onPress={() => {
+                                this.prevSlide()
+                            }}
+                        >
+                            <Svg fill="#fff" width={50} height={50} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" className="icon">
+                                <Path d="M768 903.232L717.568 960 256 512 717.568 64 768 120.768 364.928 512z" />
+                            </Svg>
+                        </TouchableOpacity>
+
+                        <Image style={{width: "100%", height: '100%', resizeMode:'contain'}} source={{uri: this.sliderImages()[this.state.current_slide_index_for_slider]}}/>
+
+                        <TouchableOpacity
+                            style={{width: 50, height:50, position:'absolute', top:120, right: 10, zIndex:9999}}
+                            onPress={() => {
+                                this.nextSlide()
+                            }}
+                        >
+                            <Svg fill="#fff" width={50} height={50} xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 1024 1024" className="icon">
+                                <Path d="M256 120.768L306.432 64 768 512 306.432 960 256 903.232 659.072 512z" />
+                            </Svg>
+                        </TouchableOpacity>
                     </View>
 
                     {/*<SliderBox*/}
@@ -3237,18 +3304,21 @@ export default class App extends React.Component {
                             <Image style={{width:'100%', height:'100%'}} source={{uri:this.previewImage()}} />
                        }
 
-                       <TouchableOpacity
-                           onPress={()=> this.setState({galleryModal:true}) }
-                           style={styles.galleryModal}
-                       >
 
-                           {/*<Image style={{width:32, height:32}} source={require('../../assets/expand.png')} />*/}
+                       {this.sliderImages().length > 0 &&
 
-                           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                               <Path fillRule="evenodd" clipRule="evenodd" d="M15.828 8.172a.5.5 0 00.707 0L23 1.708V6.25a.5.5 0 101 0V.5a.5.5 0 00-.5-.5h-5.75a.5.5 0 100 1h4.543l-6.465 6.465a.5.5 0 000 .707zm-8.363 7.656a.5.5 0 11.707.707L1.708 23H6.25a.5.5 0 010 1H.5a.5.5 0 01-.5-.5v-5.75a.5.5 0 111 0v4.542l6.465-6.464zm9.07 0a.5.5 0 00-.707.707L22.293 23H17.75a.5.5 0 100 1h5.75a.5.5 0 00.5-.5v-5.75a.5.5 0 10-1 0v4.542l-6.465-6.464zm-9.07-7.656a.5.5 0 10.707-.707L1.708 1H6.25a.5.5 0 000-1H.5a.5.5 0 00-.5.5v5.75a.5.5 0 001 0V1.707l6.465 6.464z" fill="#fff"/>
-                           </Svg>
+                           <TouchableOpacity
+                               onPress={()=> this.setState({galleryModal:true}) }
+                               style={styles.galleryModal}
+                           >
+                               <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                   <Path fillRule="evenodd" clipRule="evenodd" d="M15.828 8.172a.5.5 0 00.707 0L23 1.708V6.25a.5.5 0 101 0V.5a.5.5 0 00-.5-.5h-5.75a.5.5 0 100 1h4.543l-6.465 6.465a.5.5 0 000 .707zm-8.363 7.656a.5.5 0 11.707.707L1.708 23H6.25a.5.5 0 010 1H.5a.5.5 0 01-.5-.5v-5.75a.5.5 0 111 0v4.542l6.465-6.464zm9.07 0a.5.5 0 00-.707.707L22.293 23H17.75a.5.5 0 100 1h5.75a.5.5 0 00.5-.5v-5.75a.5.5 0 10-1 0v4.542l-6.465-6.464zm-9.07-7.656a.5.5 0 10.707-.707L1.708 1H6.25a.5.5 0 000-1H.5a.5.5 0 00-.5.5v5.75a.5.5 0 001 0V1.707l6.465 6.464z" fill="#fff"/>
+                               </Svg>
 
-                       </TouchableOpacity>
+                           </TouchableOpacity>
+
+                       }
+
 
                    </View>
 
@@ -3634,8 +3704,6 @@ export default class App extends React.Component {
                             </Modal>
 
 
-
-
                             <View style={{width:'100%', flexDirection:'row', alignItems:'center', marginBottom: 16, marginTop:16}}>
                                 <View style={{marginRight:8}}>
                                     <Svg  width={18}  height={18}  viewBox="0 0 18 18"  fill="none"  xmlns="http://www.w3.org/2000/svg">
@@ -3678,7 +3746,20 @@ export default class App extends React.Component {
                                                 key={index}
                                                 style={{flexDirection:'row', }}
                                                 onPress={() => {
-                                                    Linking.openURL(`tel:${phone}`);
+
+                                                    let new_phone = phone.replace(/\D/g, '');
+                                                    // let url = `tel:${new_phone}`;
+                                                    let url = Platform.OS !== 'android' ? `tel://${new_phone}` : `tel:${new_phone}`;
+
+                                                    // Linking.openURL(url)
+                                                    console.log(url, 'phone')
+                                                    Linking.canOpenURL(url)
+                                                        .then((supported) => {
+                                                            if (supported) {
+                                                                return Linking.openURL(url)
+                                                                    .catch(() => null);
+                                                            }
+                                                        });
                                                 }}
                                             >
 
