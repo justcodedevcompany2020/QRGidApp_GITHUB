@@ -242,7 +242,7 @@ export default class App extends React.Component {
 
 
 
-            guest_count_room: '0',
+            guest_count_room: null,
             guest_count_room_error: false,
             guest_count_room_valid: false,
 
@@ -412,7 +412,7 @@ export default class App extends React.Component {
             openThreeDotModal: false,
 
 
-            guest_count_room: '0',
+            guest_count_room: null,
             guest_count_room_error: false,
             guest_count_room_valid: false,
 
@@ -484,9 +484,10 @@ export default class App extends React.Component {
 
         })
 
-        this.props.navigation.navigate('Dashboard')
+        // this.props.navigation.navigate('Dashboard')
+        // this.props.navigation.goBack()
 
-        return true
+        // return true
     }
 
 
@@ -507,7 +508,7 @@ export default class App extends React.Component {
 
         const { navigation } = this.props;
 
-        BackHandler.addEventListener('hardwareBackPress', this._onBackPress);
+        // BackHandler.addEventListener('hardwareBackPress', this._onBackPress);
 
         this.allCheckAfterLoadComponent();
         this.loadFonts();
@@ -518,6 +519,8 @@ export default class App extends React.Component {
         // console.log(this.props.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE, 'this.props.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE')
         // console.log(this.props.object_data.data.PROPERTIES.GPS.VALUE[0], 'this.props.object_data.data.PROPERTIES.GPS.VALUE[0]')
 
+
+        console.log(this.props.object_data.data.PROPERTIES, 'this.props.object_data.data.PROPERTIES')
 
         this.focusListener = navigation.addListener("focus", () => {
 
@@ -558,7 +561,7 @@ export default class App extends React.Component {
             this.focusListener();
             console.log('Bum END')
         }
-        BackHandler.removeEventListener('hardwareBackPress', this._onBackPress)
+        // BackHandler.removeEventListener('hardwareBackPress', this._onBackPress)
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -607,19 +610,19 @@ export default class App extends React.Component {
 
                 var more_photo = this.props.object_data.data.PROPERTIES.MORE_PHOTO.VALUE;
 
-            for (let i = 0; i < more_photo.length; i++) {
+                for (let i = 0; i < more_photo.length; i++) {
 
-                // images.push({
-                //     url: more_photo[i]
-                // })
+                    // images.push({
+                    //     url: more_photo[i]
+                    // })
 
-                images.push(more_photo[i])
+                    images.push(more_photo[i])
 
-            }
+                }
 
         }
 
-
+        console.log(images, 'images')
 
 
         return images
@@ -1253,7 +1256,15 @@ export default class App extends React.Component {
                         onPress={() => {
 
                             if(this.state.isLogin === true) {
-                                this.setState({description_tab:false, audio_tab:false, contacts_tab:false, reserve_a_table:false, book_a_room: true, restorane_menu:false, reviews_tab: false})
+                                this.setState({
+                                    description_tab:false,
+                                    audio_tab:false,
+                                    contacts_tab:false,
+                                    reserve_a_table:false,
+                                    book_a_room: true,
+                                    restorane_menu:false,
+                                    reviews_tab: false
+                                })
                             } else {
 
                                 this.setState({
@@ -1449,7 +1460,7 @@ export default class App extends React.Component {
 
     minusGuestCountRoom = () => {
         let {guest_count_room} = this.state;
-        guest_count_room = parseInt(guest_count_room);
+        guest_count_room = guest_count_room ? parseInt(guest_count_room) : 0;
         let new_guest_count_room = guest_count_room > 0 ? guest_count_room - 1 : 0
 
         console.log(new_guest_count_room, 'new_guest_count_room')
@@ -1461,7 +1472,7 @@ export default class App extends React.Component {
 
     plusGuestCountRoom = () => {
         let {guest_count_room} = this.state;
-        guest_count_room = parseInt(guest_count_room);
+        guest_count_room = guest_count_room ? parseInt(guest_count_room) : 0;
 
         let new_guest_count_room = guest_count_room + 1
 
@@ -1481,7 +1492,7 @@ export default class App extends React.Component {
 
     minusGuestCountTable = () => {
         let {guest_count_table} = this.state;
-        guest_count_table = parseInt(guest_count_table);
+        guest_count_table = guest_count_table ? parseInt(guest_count_table) : 0;
         let new_guest_count_table = guest_count_table > 0 ? guest_count_table - 1 : 0
 
         console.log(new_guest_count_table, 'new_guest_count_table')
@@ -1493,10 +1504,9 @@ export default class App extends React.Component {
 
     plusGuestCountTable = () => {
         let {guest_count_table} = this.state;
-        guest_count_table = parseInt(guest_count_table);
+        guest_count_table = guest_count_table ? parseInt(guest_count_table) : 0;
 
-        let new_guest_count_table = guest_count_table + 1
-
+        let new_guest_count_table   = guest_count_table + 1
         let guest_count_table_error = new_guest_count_table === 0 ? true : false;
 
         this.setState({
@@ -1896,16 +1906,18 @@ export default class App extends React.Component {
 
         } else {
 
+            console.log(starCount, 'starCount')
+            // if (review_value === '' || starCount == 0) {
+            if ( starCount == 0) {
 
-            if (review_value === '' || starCount == 0) {
 
-
-
-
-                let error_text = review_value === '' ?
-                    this.state.language.review_required //'Поле отзыва обязательно!'
-                    :
-                    starCount == 0
+                // let error_text = review_value === '' ?
+                //     this.state.language.review_required //'Поле отзыва обязательно!'
+                //     :
+                //     starCount == 0
+                //         ? this.state.language.rate_required //'Оценка обязательна!'
+                //         : '';
+                let error_text = starCount == 0
                         ? this.state.language.rate_required //'Оценка обязательна!'
                         : '';
                 this.setState({
@@ -1935,15 +1947,21 @@ export default class App extends React.Component {
 
                 console.log(response.data, 'sendReviewHandler')
 
+                if(response.data.success)
+                {
+                    this.setState({
+                        review_value: '',
+                        starCount: 0,
+                        showSuccessAddReviewModal: true
+                    })
 
-                this.setState({
-                    review_value: '',
-                    starCount: 0,
-                    showSuccessAddReviewModal: true
-                })
+                    this.getReviews();
+
+                } else {
+
+                }
 
 
-                this.getReviews()
                 // this.setState({
                 //     isFavourites: true
                 // })
@@ -2059,12 +2077,11 @@ export default class App extends React.Component {
             edit_phone_room_masked: '',
             edit_phone_room_error: false,
             edit_phone_room_valid: false,
-
         })
-
     }
 
-    changeRegisterPhone = async (edit_phone) => {
+    // changeRegisterPhone = async (edit_phone) => {
+    changeReserveTablePhone = async (edit_phone) => {
 
         edit_phone = edit_phone.split('+').join('')
         edit_phone = '+' + edit_phone;
@@ -2078,7 +2095,6 @@ export default class App extends React.Component {
                 edit_phone_error:false,
                 edit_phone_valid:false,
                 edit_phone_error_text: ''
-
             })
         } else {
 
@@ -2305,7 +2321,7 @@ export default class App extends React.Component {
             openThreeDotModal: false,
 
 
-            guest_count_room: '0',
+            guest_count_room: null,
             guest_count_room_error: false,
             guest_count_room_valid: false,
 
@@ -3725,102 +3741,111 @@ export default class App extends React.Component {
 
 
                             {/*PHONES START*/}
-                            <View style={{width:'100%', flexDirection:'row', alignItems:'flex-start', marginBottom: 8}}>
-                                <View style={{marginRight:8}}>
-                                    <Svg  width={18}  height={18}  viewBox="0 0 18 18"  fill="none"  xmlns="http://www.w3.org/2000/svg" >
-                                        <Path d="M16 14.143c0 .563-2.746 2.792-3.907 2.856a.178.178 0 01-.095-.023C3.563 12.4 3 4.428 3 3.857 3 3.286 6.391 1 6.957 1c.565 0 2.26 4 2.26 4.571 0 .419-1.263 1.189-2.055 1.608a.203.203 0 00-.072.296l2.58 3.65a.202.202 0 00.275.053c.614-.4 1.686-1.035 2.098-1.035.566 0 3.957 3.428 3.957 4z" stroke="#9F9EAE" strokeLinecap="round" strokeLinejoin="round" />
-                                        <Mask id="a"style={{maskType: "alpha"}} maskUnits="userSpaceOnUse" x={3} y={1} width={13} height={16}>
-                                            <Path d="M16 14.143c0 .563-2.746 2.792-3.907 2.856a.178.178 0 01-.095-.023C3.563 12.4 3 4.428 3 3.857 3 3.286 6.391 1 6.957 1c.565 0 2.26 4 2.26 4.571 0 .419-1.263 1.189-2.055 1.608a.203.203 0 00-.072.296l2.58 3.65a.202.202 0 00.275.053c.614-.4 1.686-1.035 2.098-1.035.566 0 3.957 3.428 3.957 4z" fill="#C4C4C4"/>
-                                        </Mask>
-                                        <G mask="url(#a)" fill="#9F9EAE"><Path d="M4.13 8.229v-6.4a.2.2 0 00-.249-.195l-1.898.48a.2.2 0 00-.144.142L.242 8.176a.2.2 0 00.193.253H3.93a.2.2 0 00.2-.2zM12.043 15.286c.813 0 2.901-1.537 4.137-2.54.14-.113.35 0 .33.18l-.498 4.538a.2.2 0 01-.109.156l-3.228 1.632a.2.2 0 01-.139.015l-4.353-1.1a.2.2 0 01-.135-.116l-1.5-3.538a.2.2 0 01.233-.273c1.617.4 4.43 1.046 5.262 1.046z" /></G>
-                                    </Svg>
+
+                            {this.props.object_data.data.PROPERTIES.PHONE.VALUE.length > 0 &&
+
+                                <View style={{width:'100%', flexDirection:'row', alignItems:'flex-start', marginBottom: 8}}>
+                                    <View style={{marginRight:8}}>
+                                        <Svg  width={18}  height={18}  viewBox="0 0 18 18"  fill="none"  xmlns="http://www.w3.org/2000/svg" >
+                                            <Path d="M16 14.143c0 .563-2.746 2.792-3.907 2.856a.178.178 0 01-.095-.023C3.563 12.4 3 4.428 3 3.857 3 3.286 6.391 1 6.957 1c.565 0 2.26 4 2.26 4.571 0 .419-1.263 1.189-2.055 1.608a.203.203 0 00-.072.296l2.58 3.65a.202.202 0 00.275.053c.614-.4 1.686-1.035 2.098-1.035.566 0 3.957 3.428 3.957 4z" stroke="#9F9EAE" strokeLinecap="round" strokeLinejoin="round" />
+                                            <Mask id="a"style={{maskType: "alpha"}} maskUnits="userSpaceOnUse" x={3} y={1} width={13} height={16}>
+                                                <Path d="M16 14.143c0 .563-2.746 2.792-3.907 2.856a.178.178 0 01-.095-.023C3.563 12.4 3 4.428 3 3.857 3 3.286 6.391 1 6.957 1c.565 0 2.26 4 2.26 4.571 0 .419-1.263 1.189-2.055 1.608a.203.203 0 00-.072.296l2.58 3.65a.202.202 0 00.275.053c.614-.4 1.686-1.035 2.098-1.035.566 0 3.957 3.428 3.957 4z" fill="#C4C4C4"/>
+                                            </Mask>
+                                            <G mask="url(#a)" fill="#9F9EAE"><Path d="M4.13 8.229v-6.4a.2.2 0 00-.249-.195l-1.898.48a.2.2 0 00-.144.142L.242 8.176a.2.2 0 00.193.253H3.93a.2.2 0 00.2-.2zM12.043 15.286c.813 0 2.901-1.537 4.137-2.54.14-.113.35 0 .33.18l-.498 4.538a.2.2 0 01-.109.156l-3.228 1.632a.2.2 0 01-.139.015l-4.353-1.1a.2.2 0 01-.135-.116l-1.5-3.538a.2.2 0 01.233-.273c1.617.4 4.43 1.046 5.262 1.046z" /></G>
+                                        </Svg>
+                                    </View>
+
+                                    <View style={{flex:1}}>
+
+
+                                        {this.props.object_data.data.PROPERTIES.PHONE.VALUE.map((phone, index) => {
+                                            return (
+
+                                                <TouchableOpacity
+                                                    key={index}
+                                                    style={{flexDirection:'row', }}
+                                                    onPress={() => {
+
+                                                        let new_phone = phone.replace(/\D/g, '');
+                                                        // let url = `tel:${new_phone}`;
+                                                        let url = Platform.OS !== 'android' ? `tel://${new_phone}` : `tel:${new_phone}`;
+
+                                                        // Linking.openURL(url)
+                                                        console.log(url, 'phone')
+                                                        Linking.canOpenURL(url)
+                                                            .then((supported) => {
+                                                                if (supported) {
+                                                                    return Linking.openURL(url)
+                                                                        .catch(() => null);
+                                                                }
+                                                            });
+                                                    }}
+                                                >
+
+                                                    <Text style={{color:'#44434C', fontSize:14, marginBottom:8, fontFamily:'FiraSans_400Regular'}}>
+                                                        {phone}
+                                                    </Text>
+
+                                                </TouchableOpacity>
+
+                                            );})
+                                        }
+
+                                        {!this.props.object_data.data.PROPERTIES.PHONE.VALUE[0] &&
+
+                                            <Text style={{color:'#44434C', fontSize:14, marginBottom:8,fontFamily:'FiraSans_400Regular'}}>Не указан</Text>
+
+                                        }
+
+
+                                    </View>
+
+
                                 </View>
 
-                                <View style={{flex:1}}>
-
-
-                                    {this.props.object_data.data.PROPERTIES.PHONE.VALUE[0] && this.props.object_data.data.PROPERTIES.PHONE.VALUE.map((phone, index) => {
-                                        return (
-
-                                            <TouchableOpacity
-                                                key={index}
-                                                style={{flexDirection:'row', }}
-                                                onPress={() => {
-
-                                                    let new_phone = phone.replace(/\D/g, '');
-                                                    // let url = `tel:${new_phone}`;
-                                                    let url = Platform.OS !== 'android' ? `tel://${new_phone}` : `tel:${new_phone}`;
-
-                                                    // Linking.openURL(url)
-                                                    console.log(url, 'phone')
-                                                    Linking.canOpenURL(url)
-                                                        .then((supported) => {
-                                                            if (supported) {
-                                                                return Linking.openURL(url)
-                                                                    .catch(() => null);
-                                                            }
-                                                        });
-                                                }}
-                                            >
-
-                                                <Text style={{color:'#44434C', fontSize:14, marginBottom:8, fontFamily:'FiraSans_400Regular'}}>
-                                                    {phone}
-                                                </Text>
-
-                                            </TouchableOpacity>
-
-                                        );})
-                                    }
-
-                                    {!this.props.object_data.data.PROPERTIES.PHONE.VALUE[0] &&
-
-                                        <Text style={{color:'#44434C', fontSize:14, marginBottom:8,fontFamily:'FiraSans_400Regular'}}>Не указан</Text>
-
-                                    }
-
-
-                                </View>
-
-
-                            </View>
+                            }
 
                             {/*PHONES END*/}
 
 
                             {/*FAX START*/}
 
-                            <View style={{flex:1, flexDirection:'row', marginBottom:16 }}>
-                                <Svg  width={19}  height={18}  viewBox="0 0 19 18"  fill="none"  xmlns="http://www.w3.org/2000/svg"  >
-                                    <Path fillRule="evenodd" clipRule="evenodd" d="M9 6.5a.5.5 0 01-.5-.5v-.665H7.477a.5.5 0 00-.5.5v9.66a.5.5 0 00.5.5h9.026a.5.5 0 00.5-.5v-9.66a.5.5 0 00-.5-.5H15.5V6a.5.5 0 01-.5.5H9zm6.5-2.165V2a.5.5 0 00-.5-.5H9a.5.5 0 00-.5.5v2.335H7.477a1.5 1.5 0 00-1.5 1.5v9.66a1.5 1.5 0 001.5 1.5h9.026a1.5 1.5 0 001.5-1.5v-9.66a1.5 1.5 0 00-1.5-1.5H15.5zM9.5 2.5v3h5v-3h-5zm.7 6.1a.6.6 0 11-1.2 0 .6.6 0 011.2 0zm2.4 0a.6.6 0 11-1.2 0 .6.6 0 011.2 0zm1.8.6a.6.6 0 100-1.2.6.6 0 000 1.2zM10.2 11A.6.6 0 119 11a.6.6 0 011.2 0zm1.8.6a.6.6 0 100-1.2.6.6 0 000 1.2zm3-.6a.6.6 0 11-1.2 0 .6.6 0 011.2 0zm-5.4 3a.6.6 0 100-1.2.6.6 0 000 1.2zm3-.6a.6.6 0 11-1.2 0 .6.6 0 011.2 0zm1.8.6a.6.6 0 100-1.2.6.6 0 000 1.2zM4.477 2.079a.5.5 0 01.5.5v12.886a1.5 1.5 0 01-1.5 1.5H1.51a1.5 1.5 0 01-1.5-1.5V5.893a1.5 1.5 0 011.5-1.5h1.966c.175 0 .344.03.5.086v-1.9a.5.5 0 01.5-.5zM1.51 5.393a.5.5 0 00-.5.5v9.572a.5.5 0 00.5.5h1.967a.5.5 0 00.5-.5V5.893a.5.5 0 00-.5-.5H1.51z" fill="#9F9EAE" />
-                                </Svg>
-                                <View style={{flexDirection:'row',marginLeft:8 }}>
+                            {this.props.object_data.data.PROPERTIES.FAX.VALUE &&
+
+                                <View style={{flex:1, flexDirection:'row', marginBottom:16 }}>
+                                    <Svg  width={19}  height={18}  viewBox="0 0 19 18"  fill="none"  xmlns="http://www.w3.org/2000/svg"  >
+                                        <Path fillRule="evenodd" clipRule="evenodd" d="M9 6.5a.5.5 0 01-.5-.5v-.665H7.477a.5.5 0 00-.5.5v9.66a.5.5 0 00.5.5h9.026a.5.5 0 00.5-.5v-9.66a.5.5 0 00-.5-.5H15.5V6a.5.5 0 01-.5.5H9zm6.5-2.165V2a.5.5 0 00-.5-.5H9a.5.5 0 00-.5.5v2.335H7.477a1.5 1.5 0 00-1.5 1.5v9.66a1.5 1.5 0 001.5 1.5h9.026a1.5 1.5 0 001.5-1.5v-9.66a1.5 1.5 0 00-1.5-1.5H15.5zM9.5 2.5v3h5v-3h-5zm.7 6.1a.6.6 0 11-1.2 0 .6.6 0 011.2 0zm2.4 0a.6.6 0 11-1.2 0 .6.6 0 011.2 0zm1.8.6a.6.6 0 100-1.2.6.6 0 000 1.2zM10.2 11A.6.6 0 119 11a.6.6 0 011.2 0zm1.8.6a.6.6 0 100-1.2.6.6 0 000 1.2zm3-.6a.6.6 0 11-1.2 0 .6.6 0 011.2 0zm-5.4 3a.6.6 0 100-1.2.6.6 0 000 1.2zm3-.6a.6.6 0 11-1.2 0 .6.6 0 011.2 0zm1.8.6a.6.6 0 100-1.2.6.6 0 000 1.2zM4.477 2.079a.5.5 0 01.5.5v12.886a1.5 1.5 0 01-1.5 1.5H1.51a1.5 1.5 0 01-1.5-1.5V5.893a1.5 1.5 0 011.5-1.5h1.966c.175 0 .344.03.5.086v-1.9a.5.5 0 01.5-.5zM1.51 5.393a.5.5 0 00-.5.5v9.572a.5.5 0 00.5.5h1.967a.5.5 0 00.5-.5V5.893a.5.5 0 00-.5-.5H1.51z" fill="#9F9EAE" />
+                                    </Svg>
+                                    <View style={{flexDirection:'row',marginLeft:8 }}>
 
 
-                                    {this.props.object_data.data.PROPERTIES.FAX.VALUE &&
 
                                         <Text style={{color:'#44434C', fontSize:14, fontFamily:'FiraSans_400Regular'}}>
                                             {this.state.object_data.data.PROPERTIES.FAX.VALUE}
                                         </Text>
 
-                                    }
 
-                                    {!this.props.object_data.data.PROPERTIES.FAX.VALUE &&
+                                        {!this.props.object_data.data.PROPERTIES.FAX.VALUE &&
 
-                                        <Text style={{color:'#44434C', fontSize:14, fontFamily:'FiraSans_400Regular'}}>
-                                            Не указан
-                                        </Text>
+                                            <Text style={{color:'#44434C', fontSize:14, fontFamily:'FiraSans_400Regular'}}>
+                                                Не указан
+                                            </Text>
 
-                                    }
+                                        }
+                                    </View>
+
                                 </View>
 
-                            </View>
+                            }
 
                             {/*FAX END*/}
 
 
 
 
-                            <View style={{width:'100%', flexDirection:'row', alignItems:'flex-start', marginBottom: 17}}>
+                            {/*Mail START*/}
+                            {this.props.object_data.data.PROPERTIES.MAIL.VALUE.length > 0 &&
+                              <View style={{width:'100%', flexDirection:'row', alignItems:'flex-start', marginBottom: 17}}>
                                 <View style={{marginRight:8}}>
                                     <Svg width={18} height={18} viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <Path fillRule="evenodd" clipRule="evenodd" d="M1.56 1.073a1.5 1.5 0 00-1.5 1.5v12.89a1.5 1.5 0 001.5 1.5h14.91a1.5 1.5 0 001.5-1.5V2.574a1.5 1.5 0 00-1.5-1.5H1.56zm-.5 1.5a.5.5 0 01.5-.5h14.91a.5.5 0 01.5.5v12.89a.5.5 0 01-.5.5H1.56a.5.5 0 01-.5-.5V2.574zM9 4.999a4 4 0 000 8 .5.5 0 010 1 5 5 0 115-5c0 1.259-.663 2.188-1.625 2.188-.464 0-.859-.216-1.143-.58a2.75 2.75 0 11.518-1.55c.017.942.465 1.13.625 1.13.162 0 .625-.196.625-1.188a4 4 0 00-4-4zm1.75 4V8.97a1.75 1.75 0 100 .03z" fill="#9F9EAE"  />
@@ -3828,7 +3853,7 @@ export default class App extends React.Component {
                                 </View>
 
                                 <View style={{flex:1}}>
-                                    {this.props.object_data.data.PROPERTIES.MAIL.VALUE[0] && this.props.object_data.data.PROPERTIES.MAIL.VALUE.map((email, index) => {
+                                    { this.props.object_data.data.PROPERTIES.MAIL.VALUE.map((email, index) => {
                                         return (
 
                                             <TouchableOpacity
@@ -3853,38 +3878,47 @@ export default class App extends React.Component {
                                 </View>
 
                             </View>
+                            }
+                            {/*MAIL END*/}
 
-                            <View style={{width:'100%', flexDirection:'row', alignItems:'flex-start', marginBottom: 17}}>
-                                <View style={{marginRight:8}}>
-                                    <Svg  width={18}  height={18}  viewBox="0 0 18 18"  fill="none"  xmlns="http://www.w3.org/2000/svg">
-                                        <Path  fillRule="evenodd"  clipRule="evenodd"  d="M5.783.514a.5.5 0 00-1 0v2.072H2.515a2.5 2.5 0 00-2.5 2.5v10.4a2.5 2.5 0 002.5 2.5H15.47a2.5 2.5 0 002.5-2.5v-10.4a2.5 2.5 0 00-2.5-2.5h-2.268V.514a.5.5 0 10-1 0v2.072H5.783V.514zm6.919 3.072H2.515a1.5 1.5 0 00-1.5 1.5v.071H16.97v-.071a1.5 1.5 0 00-1.5-1.5h-2.768zm4.268 2.571H1.015v9.329a1.5 1.5 0 001.5 1.5H15.47a1.5 1.5 0 001.5-1.5V6.157zM9.493 8.743a.5.5 0 00-1 0v3.086a.5.5 0 00.151.358l1.59 1.543a.5.5 0 00.696-.717l-1.437-1.396V8.743z"  fill="#9F9EAE" />
-                                    </Svg>
-                                </View>
 
-                                <View style={{flex:1, width:'100%'}}>
+                            {/*TIME START*/}
 
-                                    {this.props.object_data.data.PROPERTIES.hasOwnProperty('TIME') && this.props.object_data.data.PROPERTIES.TIME.VALUE.map((time, index) => {
+                            {this.props.object_data.data.PROPERTIES.hasOwnProperty('TIME') && this.props.object_data.data.PROPERTIES.TIME.VALUE.length > 0 &&
+                                <View style={{width:'100%', flexDirection:'row', alignItems:'flex-start', marginBottom: 17}}>
+                                    <View style={{marginRight:8}}>
+                                        <Svg  width={18}  height={18}  viewBox="0 0 18 18"  fill="none"  xmlns="http://www.w3.org/2000/svg">
+                                            <Path  fillRule="evenodd"  clipRule="evenodd"  d="M5.783.514a.5.5 0 00-1 0v2.072H2.515a2.5 2.5 0 00-2.5 2.5v10.4a2.5 2.5 0 002.5 2.5H15.47a2.5 2.5 0 002.5-2.5v-10.4a2.5 2.5 0 00-2.5-2.5h-2.268V.514a.5.5 0 10-1 0v2.072H5.783V.514zm6.919 3.072H2.515a1.5 1.5 0 00-1.5 1.5v.071H16.97v-.071a1.5 1.5 0 00-1.5-1.5h-2.768zm4.268 2.571H1.015v9.329a1.5 1.5 0 001.5 1.5H15.47a1.5 1.5 0 001.5-1.5V6.157zM9.493 8.743a.5.5 0 00-1 0v3.086a.5.5 0 00.151.358l1.59 1.543a.5.5 0 00.696-.717l-1.437-1.396V8.743z"  fill="#9F9EAE" />
+                                        </Svg>
+                                    </View>
 
-                                        return (
-                                            <View key={time.VALUE} style={{flexDirection:'row', marginBottom:8, width:'100%' }}>
-                                                <Text style={{color:'#44434C', fontSize:14,  marginRight: 8, fontFamily:'FiraSans_400Regular'}}>{time.VALUE}</Text>
-                                                <Text style={{color:'#55545F', fontSize:13, fontFamily:'FiraSans_400Regular'}}>{time.NAME} </Text>
+                                    <View style={{flex:1, width:'100%'}}>
+
+                                        {this.props.object_data.data.PROPERTIES.hasOwnProperty('TIME') && this.props.object_data.data.PROPERTIES.TIME.VALUE.map((time, index) => {
+
+                                            console.log(this.props.object_data.data.PROPERTIES.TIME, 'TIME')
+                                            return (
+                                                <View key={time.VALUE} style={{flexDirection:'row', marginBottom:8, width:'100%' }}>
+                                                    <Text style={{color:'#44434C', fontSize:14,  marginRight: 8, fontFamily:'FiraSans_400Regular'}}>{time.VALUE}</Text>
+                                                    <Text style={{color:'#55545F', fontSize:13, fontFamily:'FiraSans_400Regular'}}>{time.NAME} </Text>
+                                                </View>
+                                            );
+
+                                        })}
+
+
+                                        {!this.props.object_data.data.PROPERTIES.TIME &&
+
+                                            <View  style={{flexDirection:'row', marginBottom:8, width:'100%' }}>
+                                                <Text style={{color:'#44434C', fontSize:14,  marginRight: 8, fontFamily:'FiraSans_400Regular'}}>Не указан</Text>
                                             </View>
-                                        );
 
-                                    })}
+                                        }
 
-
-                                    {!this.props.object_data.data.PROPERTIES.TIME &&
-
-                                        <View  style={{flexDirection:'row', marginBottom:8, width:'100%' }}>
-                                            <Text style={{color:'#44434C', fontSize:14,  marginRight: 8, fontFamily:'FiraSans_400Regular'}}>Не указан</Text>
-                                        </View>
-
-                                    }
-
+                                    </View>
                                 </View>
-                            </View>
+                            }
+                            {/*TIME END*/}
 
 
                             <View style={ styles.weekDaysWrapper}>
@@ -4306,7 +4340,8 @@ export default class App extends React.Component {
 
                             <TextInput
                                 value={this.state.edit_phone}
-                                onChangeText={(edit_phone) => this.changeRegisterPhone(edit_phone)}
+                                // onChangeText={(edit_phone) => this.changeRegisterPhone(edit_phone)}
+                                onChangeText={(edit_phone) => this.changeReserveTablePhone(edit_phone)}
                                 underlineColorAndroid ='transparent'
                                 label={
                                     <Text
@@ -4317,8 +4352,8 @@ export default class App extends React.Component {
                                     >
 
 
-                                        {/*Телефон*/}
-                                        {this.state.language.phone}
+                                {/*Телефон*/}
+                                {this.state.language.phone}
                                         <Text style={{color:'red'}}>*</Text>
                                     </Text>
                                 }
@@ -4590,8 +4625,6 @@ export default class App extends React.Component {
 
                                        <View style={{flex:1}}>
                                            <View style={[styles.emptyInput, {top:13, zIndex:98}]}>
-
-
 
                                                <TouchableOpacity
                                                    onPress={() => {
@@ -5207,10 +5240,7 @@ export default class App extends React.Component {
 
                         <View style={[{width:'100%',  paddingVertical: 16}, !this.state.reviews_tab ? {display:'none'} : {}]}>
 
-
-
                             {this.state.reviews_data.length === 0 &&
-
                                 <Text style={{width: '100%', textAlign:'center',marginTop: 20, marginBottom: 20, fontFamily:'FiraSans_400Regular'}}>
                                     {/*Нет отзывов!*/}
                                     {this.state.language.no_reviews}
@@ -5230,7 +5260,7 @@ export default class App extends React.Component {
                                                 <View style={{width: '100%',  justifyContent:'space-between', marginBottom:14, alignItems:'flex-start', flexDirection:'row'}}>
 
                                                     <View>
-                                                        <Text style={{color: '#1D1D20', fontSize: 16, fontFamily:'Ubuntu_400Regular'}}>{review_item.user}</Text>
+                                                        <Text style={{color: '#1D1D20', fontSize: 16, fontFamily:'Ubuntu_400Regular'}}>Логин: {review_item.login}</Text>
                                                         <Text style={{color: '#54535F', fontSize: 12, fontFamily:'FiraSans_400Regular'}}>{review_item.date}</Text>
                                                     </View>
 
@@ -5268,9 +5298,7 @@ export default class App extends React.Component {
 
                                     <TouchableOpacity
                                         onPress={()=> {
-
                                            this.showMoreReviews()
-
                                         }}
                                         style={{width: '100%', height: 36, justifyContent:'center', alignItems:'center', marginBottom: 19}}
                                     >
@@ -5321,7 +5349,7 @@ export default class App extends React.Component {
                                         // onChang
                                     />
 
-                                    <Text style={[styles.inp_buttom_label, {color:'#54535F', fontSize:12}]}>
+                                    <Text style={[styles.inp_buttom_label, {color:'#54535F', fontSize:12, marginTop:5}]}>
 
                                         {this.state.language.write_your_review_about_the_institution}
 

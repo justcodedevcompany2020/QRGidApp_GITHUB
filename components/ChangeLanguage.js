@@ -85,10 +85,15 @@ export default class App extends React.Component {
         })
     }
 
-    closeChangeTerrain() {
-        this.setState({
+    goToObjectMap = () => {
+        this.props.navigation.navigate('ObjectMap')
+    }
+    closeChangeTerrain  = async () => {
+        console.log('changed')
+        await this.setState({
             isOpenChangeTerrain: false
         })
+        this.goToObjectMap()
     }
 
 

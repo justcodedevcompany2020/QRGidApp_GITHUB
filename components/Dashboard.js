@@ -119,8 +119,9 @@ export default class App extends Component {
     }
 
     _onBackPress = () => {
-        this.props.navigation.navigate('Dashboard')
-        return true
+        // this.props.navigation.navigate('Dashboard')
+        // this.props.navigation.navigate.goBack()
+        // return true
     }
 
     checkLogin = async () => {
@@ -153,8 +154,7 @@ export default class App extends Component {
 
     componentDidMount() {
         const { navigation } = this.props;
-        BackHandler.addEventListener('hardwareBackPress', this._onBackPress)
-
+        // BackHandler.addEventListener('hardwareBackPress', this._onBackPress)
         // AsyncStorage.removeItem('selected_oblast_and_region');
 
         this.checkLogin();
@@ -175,7 +175,7 @@ export default class App extends Component {
             this.focusListener();
             console.log('Bum END')
         }
-        BackHandler.removeEventListener('hardwareBackPress', this._onBackPress)
+        // BackHandler.removeEventListener('hardwareBackPress', this._onBackPress)
 
         // this.focusListener();
 

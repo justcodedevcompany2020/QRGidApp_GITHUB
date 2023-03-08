@@ -4,6 +4,9 @@ import 'react-native-gesture-handler';
 import { Button, View, Text, Image, ScrollView, StyleSheet, StatusBar, Dimensions, ActivityIndicator   } from 'react-native';
 import { NavigationContainer, getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
+const Stack = createStackNavigator();
+
 
 import LoaderComponent from './components/Loader';
 import DashboardComponent from './components/Dashboard';
@@ -185,6 +188,7 @@ export default function App() {
 
       const userToken = String(foundUser.token);
       const userEmail = foundUser.email;
+      const userPassword = foundUser.password;
       const userId = foundUser.userId;
       // const language = foundUser.language;
       // setUserToken(userToken);
@@ -192,7 +196,11 @@ export default function App() {
       try {
         await AsyncStorage.setItem('userToken', userToken);
         await AsyncStorage.setItem('userId', userId);
-        // await AsyncStorage.setItem('language', JSON.stringify({language: language}));
+        await AsyncStorage.setItem('language', JSON.stringify({language: 'ru'}));
+
+        await AsyncStorage.setItem('userEmail', userEmail);
+        await AsyncStorage.setItem('userPassword', userPassword);
+
       } catch(e) {
         console.log(e);
       }
@@ -248,16 +256,16 @@ export default function App() {
   }, []);
 
 
-  if( isLoading ) {
-  // if( true ) {
-    return(
-        // <LoaderComponent />
-
-        <View style={{width: '100%', height: '100%', backgroundColor: '#FF9161'}}>
-
-        </View>
-    );
-  }
+  // if( isLoading ) {
+  // // if( true ) {
+  //   return(
+  //       // <LoaderComponent />
+  //
+  //       <View style={{width: '100%', height: '100%', backgroundColor: '#FF9161'}}>
+  //
+  //       </View>
+  //   );
+  // }
 
 
 if( isLoading ) {
@@ -271,29 +279,26 @@ if( isLoading ) {
   return (
       <AuthContext.Provider  value={authContext}>
         <NavigationContainer>
-                  <Tab.Navigator
+                  <Stack.Navigator
                       initialRouteName="LoaderComponent"
-                      screenOptions={({route}) => ({
-                        tabBarShowLabel: false,
-                        headerShown: false,
-                        tabBarActiveTintColor: '#2EB6A5',
-                        tabBarInactiveTintColor: 'gray',
-                        tabBarStyle: {display: 'none'},
-
-                      })}
+                      screenOptions={{
+                          tabBarShowLabel: false,
+                          headerShown: false,
+                          tabBarActiveTintColor: '#2EB6A5',
+                          tabBarInactiveTintColor: 'gray',
+                          tabBarStyle: {display: 'none'},
+                      }}
                       tabBar={() => null}
-
                   >
 
-
-                    <Tab.Screen name="LoaderComponent" component={LoaderComponentScreen}
+                    <Stack.Screen name="LoaderComponent" component={LoaderComponentScreen}
                         options={({route}) => ({
                           tabBarButton: () => null,
                           tabBarStyle: {display: 'none'}
                         })}
                     />
 
-                    <Tab.Screen name="Dashboard" component={DashboardScreen}
+                    <Stack.Screen name="Dashboard" component={DashboardScreen}
                         options={({route}) => ({
                           tabBarButton: () => null,
                           tabBarStyle: {display: 'none'}
@@ -301,42 +306,42 @@ if( isLoading ) {
                     />
 
 
-                    <Tab.Screen name="QrScanner" component={QrScannerScreen}
+                    <Stack.Screen name="QrScanner" component={QrScannerScreen}
                         options={({route}) => ({
                           tabBarButton: () => null,
                           tabBarStyle: {display: 'none'}
                         })}
                     />
 
-                    <Tab.Screen name="Object" component={ObjectScreen}
+                    <Stack.Screen name="Object" component={ObjectScreen}
                         options={({route}) => ({
                           tabBarButton: () => null,
                           tabBarStyle: {display: 'none'}
                         })}
                     />
 
-                    <Tab.Screen name="ObjectMap" component={ObjectMapScreen}
+                    <Stack.Screen name="ObjectMap" component={ObjectMapScreen}
                         options={({route}) => ({
                           tabBarButton: () => null,
                           tabBarStyle: {display: 'none'}
                         })}
                     />
 
-                    <Tab.Screen name="About" component={AboutScreen}
+                    <Stack.Screen name="About" component={AboutScreen}
                         options={({route}) => ({
                           tabBarButton: () => null,
                           tabBarStyle: {display: 'none'}
                         })}
                     />
 
-                    <Tab.Screen name="ChangeLanguage" component={ChangeLanguageScreen}
+                    <Stack.Screen name="ChangeLanguage" component={ChangeLanguageScreen}
                         options={({route}) => ({
                           tabBarButton: () => null,
                           tabBarStyle: {display: 'none'}
                         })}
                     />
 
-                <Tab.Screen name="ContactForm" component={ContactFormScreen}
+                <Stack.Screen name="ContactForm" component={ContactFormScreen}
                     options={({route}) => ({
                       tabBarButton: () => null,
                       tabBarStyle: {display: 'none'}
@@ -344,7 +349,7 @@ if( isLoading ) {
                 />
 
 
-                  <Tab.Screen name="Profile" component={ProfileScreen}
+                  <Stack.Screen name="Profile" component={ProfileScreen}
                       options={({route}) => ({
                           tabBarButton: () => null,
                           tabBarStyle: {display: 'none'}
@@ -352,7 +357,7 @@ if( isLoading ) {
                   />
 
 
-                  <Tab.Screen name="Login" component={LoginScreen}
+                  <Stack.Screen name="Login" component={LoginScreen}
                         options={({route}) => ({
                           tabBarButton: () => null,
                           tabBarStyle: {display: 'none'}
@@ -360,14 +365,14 @@ if( isLoading ) {
                   />
 
 
-                  <Tab.Screen name="MyPlaces" component={MyPlacesScreen}
+                  <Stack.Screen name="MyPlaces" component={MyPlacesScreen}
                         options={({route}) => ({
                           tabBarButton: () => null,
                           tabBarStyle: {display: 'none'}
                         })}
                   />
 
-                  </Tab.Navigator>
+                  </Stack.Navigator>
         </NavigationContainer>
       </AuthContext.Provider>
   );

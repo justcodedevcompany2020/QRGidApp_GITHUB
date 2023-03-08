@@ -2,7 +2,7 @@
   "expo": {
     "name": "QR_GID",
     "slug": "qr_gid",
-    "version": "8.0.0",
+    "version": "9.0.0",
     "orientation": "portrait",
     "icon": "./assets/android_logotwo.png",
     "splash": {
@@ -22,7 +22,7 @@
         "googleMapsApiKey": "AIzaSyAvTddoHzPpejdOPc3kX6-EBvZcAmD_sFg"
       },
       "bundleIdentifier": "com.JustCode.QRGIDJ",
-      "buildNumber": "8.0.0"
+      "buildNumber": "9.0.0"
     },
     "android": {
       "adaptiveIcon": {
@@ -40,7 +40,7 @@
         "ACCESS_FINE_LOCATION",
         "android.permission.RECORD_AUDIO"
       ],
-      "versionCode": 8
+      "versionCode": 9
     },
     "web": {
       "favicon": "./assets/favicon.png"

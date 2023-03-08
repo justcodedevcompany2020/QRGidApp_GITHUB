@@ -144,7 +144,10 @@ const ru = {
     file_size: 'Размер файла',
     release_date: 'Дата выпуска',
     and_more: 'и выше',
-    g: 'г.'
+    g: 'г.',
+    location_required_text: 'Для доступа к обьекту предоставьте доступ к локации',
+    remove_profile: 'УДАЛИТЬ ПРОФИЛЬ',
+    are_you_sure_you_want_to_delete_the_profile: 'Вы уверены, что хотите удалить профиль?',
 
 };
 
@@ -287,7 +290,11 @@ const bel = {
     file_size: 'Памер файла',
     release_date: 'Дата выпуску',
     and_more: 'і вышэй',
-    g: 'г.'
+    g: 'г.',
+    location_required_text: 'Каб мець доступ да абекта, дайце доступ да лакацыі',
+    remove_profile: 'ВІДАЛІЦЬ ПРОФІЛЮ',
+    are_you_sure_you_want_to_delete_the_profile: 'Вы ўпэўненыя, што жадаеце выдаліць профіль?'
+
 };
 
 const en = {
@@ -422,6 +429,10 @@ const en = {
     release_date: 'Release date',
     and_more: 'and higher',
     g:'g.',
+    location_required_text: 'You should allow location access to go to the object',
+    remove_profile: 'DELETE PROFILE',
+    are_you_sure_you_want_to_delete_the_profile: 'Are you sure you want to delete the profile?'
+
 };
 
 export { ru, bel, en};

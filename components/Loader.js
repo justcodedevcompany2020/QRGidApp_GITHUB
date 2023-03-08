@@ -115,6 +115,15 @@ export default class App extends Component {
 
 
         }, 1300);
+
+        const { navigation } = this.props;
+
+        this.focusListener = navigation.addListener("focus", ()  =>  {
+
+            if(a > 3) {
+                this.props.navigation.navigate('Dashboard')
+            }
+        });
     }
 
 

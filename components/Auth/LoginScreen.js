@@ -239,6 +239,8 @@ export default class App extends Component {
 
                 } else {
 
+                    Keyboard.dismiss()
+
                     this.setState({
                         login_error: false,
                         login_valid:false,
@@ -255,7 +257,9 @@ export default class App extends Component {
                         token: userToken,
                         userId: userId,
                         // language: 'ru',
-                        email: 'no'
+                        email: login,
+                        password: password
+
                     }
 
                     let navigate = this.props.navigation;
@@ -274,6 +278,50 @@ export default class App extends Component {
         );
 
 
+
+
+    }
+
+
+    clearRegisterForm = async () => {
+
+        await this.setState({
+            reg_login: '',
+            reg_login_error: false,
+            reg_login_valid: false,
+            reg_login_error_text: '',
+
+            reg_fio: '',
+            reg_fio_error: false,
+            reg_fio_valid: false,
+
+            reg_phone: '',
+            reg_phone_masked: '',
+
+            reg_phone_error: false,
+            reg_phone_valid: false,
+            reg_phone_error_text: '',
+
+            reg_email: '',
+            reg_email_error: false,
+            reg_email_valid: false,
+            reg_email_error_text: '',
+
+            reg_password: '',
+            reg_password_error: false,
+            reg_password_valid: false,
+            reg_password_error_text: '',
+
+            reg_confirm_password: '',
+            reg_confirm_password_error: false,
+            reg_confirm_password_valid: false,
+            reg_confirm_password_error_text: '',
+
+
+
+            registerPolicy: false,
+            isOpenRegisterModal: false
+        })
 
 
     }
@@ -313,21 +361,25 @@ export default class App extends Component {
         }
 
         axios.post('https://qr-gid.by/api/auth/register/', req).then(
-            (response) => {
+           async (response)  => {
 
-
+                console.log(response, 'register response')
 
                 if(response.data.TYPE == "OK") {
 
                     let userToken = response.headers['set-cookie'];
                     let userId = response.data.ID;
 
+                    // clear register form data
+
+                    await this.clearRegisterForm();
 
                     let foundUser = {
                         token: userToken,
                         userId:userId,
                         // language: 'ru',
-                        email: 'no'
+                        email: login,
+                        password: pass
                     }
 
                     let navigate = this.props.navigation;
@@ -335,6 +387,7 @@ export default class App extends Component {
                         navigate.navigate('Profile')
                     });
 
+                    return false;
 
                 } else if (response.data.TYPE == 'Error') {
 
@@ -478,8 +531,6 @@ export default class App extends Component {
 
 
     componentDidMount() {
-
-
         const { navigation } = this.props;
 
         this.focusListener = navigation.addListener("focus", () => {
@@ -496,6 +547,8 @@ export default class App extends Component {
                     STATUSBAR_HEIGHT: StatusBarManager.HEIGHT
                 })
             }
+
+            this.getLocalEmailAndPassword();
 
         });
 
@@ -515,6 +568,21 @@ export default class App extends Component {
     componentWillUnmount() {
         this.keyboardDidShowListener.remove();
         this.keyboardDidHideListener.remove();
+    }
+
+
+    getLocalEmailAndPassword = async () =>
+    {
+        let user_email    = await AsyncStorage.getItem('userEmail');
+        let user_password = await AsyncStorage.getItem('userPassword');
+
+        await this.setState({
+            login: user_email ? user_email : '',
+            password: user_password ? user_password : ''
+        })
+
+        console.log(user_email, 'user_email getLocalEmailAndPassword')
+        console.log(user_password, 'user_password getLocalEmailAndPassword')
     }
 
     _keyboardDidShow =(event) => {
@@ -539,14 +607,17 @@ export default class App extends Component {
 
 
 
-    changeRegisterPhone = (reg_phone_masked, reg_phone) => {
+    changeRegisterPhone = (reg_phone_masked, reg_phone) =>
+    {
         reg_phone = '+'+reg_phone;
+
         this.setState({
             reg_phone_masked: reg_phone_masked,
             reg_phone: reg_phone,
         });
 
-        var phonereg = /[+]375[0-9]{9}/;
+        // var phonereg = /[+]375[0-9]{9}/;
+        var phonereg = /[+]/;
 
 
         if(reg_phone == '') {
@@ -557,7 +628,7 @@ export default class App extends Component {
 
             })
         } else {
-            if (reg_phone.match(phonereg) && reg_phone.length == 13) {
+            if (reg_phone.match(phonereg) && reg_phone.length > 6) {
                 this.setState({
                     reg_phone_error:false,
                     reg_phone_valid:true,
@@ -582,8 +653,11 @@ export default class App extends Component {
     //Email functions
 
     changeRegisterEmail = (reg_email) => {
-        reg_email = reg_email.replace(/\s/g, '')
-        this.setState({ reg_email:reg_email })
+        reg_email = reg_email.replace(/\s/g, '');
+        this.setState({
+            reg_email:reg_email,
+            reg_login:reg_email,
+        })
 
         if (reg_email == '') {
             this.setState({
@@ -666,6 +740,7 @@ export default class App extends Component {
 
         this.setState({
             reg_email: '',
+            reg_login: '',
             reg_email_error:false,
             reg_email_valid: false
         })
@@ -1101,7 +1176,7 @@ export default class App extends Component {
                                             {color: this.state.login_error ? '#A4223C'  : this.state.login_valid ?  '#337363' : '#55545F' },
                                             {marginBottom:50, }
                                         ]}>
-                                        Логин
+                                        Логин или E-mail
                                     </Text>
                                 }
                                 theme={{colors: {text: '#55545F', primary: 'transparent'}}}
@@ -1540,8 +1615,6 @@ export default class App extends Component {
                               <View style={{position:'absolute', top: -210, alignSelf: 'center', width: 188, height: 188, borderRadius: 168, backgroundColor:'white', justifyContent:'center', alignItems:'center'}}>
 
 
-
-
                                   {/*Top left START*/}
 
 
@@ -1657,12 +1730,154 @@ export default class App extends Component {
 
                             {/*Login*/}
 
+                            {/*<View style={styles.inputWrapper}>*/}
+
+                            {/*    {this.state.reg_login_error &&*/}
+
+                            {/*        <TouchableOpacity style={styles.emptyInput}*/}
+                            {/*            onPress={()=>this.clearLoginInput()}*/}
+                            {/*        >*/}
+                            {/*            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >*/}
+                            {/*                <Path fillRule="evenodd" clipRule="evenodd" d="M23 12c0 6.075-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11zm1 0c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zM9.354 8.646a.5.5 0 10-.708.708L11.293 12l-2.647 2.646a.5.5 0 00.708.708L12 12.707l2.646 2.647a.5.5 0 00.708-.708L12.707 12l2.647-2.646a.5.5 0 00-.708-.708L12 11.293 9.354 8.646z" fill="#A4223C"/>*/}
+                            {/*            </Svg>*/}
+                            {/*        </TouchableOpacity>*/}
+
+                            {/*    }*/}
+
+                            {/*    {this.state.reg_login_valid &&*/}
+
+                            {/*        <TouchableOpacity style={styles.emptyInput}>*/}
+                            {/*            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >*/}
+                            {/*                <Path  fillRule="evenodd"  clipRule="evenodd"  d="M23 12c0 6.075-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11zm1 0c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-8.09-2.917a.66.66 0 01.442-.197.547.547 0 01.427.176c.248.228.248.62.02.87l-4.758 4.985a.626.626 0 01-.91-.02l-2.71-2.918a.62.62 0 01.041-.869.619.619 0 01.869.042l2.255 2.42 4.324-4.49z"  fill="#337363"/>*/}
+                            {/*            </Svg>*/}
+                            {/*        </TouchableOpacity>*/}
+
+                            {/*    }*/}
+
+
+                            {/*    <TextInput*/}
+                            {/*        value={this.state.reg_login}*/}
+                            {/*        onChangeText={(reg_login) => this.changeRegisterlogin(reg_login)}*/}
+                            {/*        style={[*/}
+
+                            {/*            styles.input,*/}
+                            {/*            this.state.reg_login_error && {*/}
+                            {/*                borderWidth:1, borderColor:'#A4223C'*/}
+                            {/*            },*/}
+                            {/*            this.state.reg_login_valid && {*/}
+                            {/*                borderWidth:1, borderColor:'#337363'*/}
+                            {/*            }*/}
+                            {/*        ]}*/}
+                            {/*        underlineColorAndroid ='transparent'*/}
+                            {/*        label={*/}
+                            {/*            <Text*/}
+                            {/*                style={[*/}
+                            {/*                    {color: !this.state.reg_login_error ? '#55545F' : '#A4223C'},*/}
+                            {/*                    {color: this.state.reg_login_valid ? '#337363' : '#55545F'},*/}
+                            {/*                ]*/}
+                            {/*                }>*/}
+                            {/*                Логин или e-mail <Text style={{color:'red'}}>*</Text>*/}
+                            {/*            </Text>*/}
+                            {/*        }*/}
+                            {/*        error={false}*/}
+                            {/*        onBlur={() => this.onBlurRegisterLogin()}*/}
+                            {/*        theme={{colors: {text: '#55545F', primary: 'transparent'}}}*/}
+                            {/*        underlineColor='transparent'*/}
+                            {/*        selectionColor='#E1C1B7'*/}
+                            {/*        activeOutlineColor='transparent'*/}
+
+                            {/*    />*/}
+
+
+                            {/*    {this.state.reg_login_error ?*/}
+
+                            {/*        <Text style={[styles.inp_buttom_label, {color:'#A4223C', marginBottom: 6, position:'absolute', bottom:-1}]}>*/}
+                            {/*            {this.state.reg_login_error_text}*/}
+                            {/*        </Text>*/}
+
+                            {/*        :*/}
+
+                            {/*        (*/}
+                            {/*            !this.state.reg_login_valid &&*/}
+                            {/*            <Text style={[styles.inp_buttom_label, { marginBottom: 6, position:'absolute', bottom:-1}]}>*/}
+                            {/*                Введите свой логин*/}
+                            {/*            </Text>*/}
+                            {/*        )*/}
+
+                            {/*    }*/}
+                            {/*</View>*/}
+
+                            {/*FIO*/}
+
+                            {/*<View style={styles.inputWrapper}>*/}
+
+                            {/*    {this.state.reg_fio_valid &&*/}
+
+                            {/*        <TouchableOpacity style={styles.emptyInput}>*/}
+                            {/*            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >*/}
+                            {/*                <Path  fillRule="evenodd"  clipRule="evenodd"  d="M23 12c0 6.075-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11zm1 0c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-8.09-2.917a.66.66 0 01.442-.197.547.547 0 01.427.176c.248.228.248.62.02.87l-4.758 4.985a.626.626 0 01-.91-.02l-2.71-2.918a.62.62 0 01.041-.869.619.619 0 01.869.042l2.255 2.42 4.324-4.49z"  fill="#337363"/>*/}
+                            {/*            </Svg>*/}
+                            {/*        </TouchableOpacity>*/}
+
+                            {/*    }*/}
+
+                            {/*    <TextInput*/}
+                            {/*        value={this.state.reg_fio}*/}
+                            {/*        onChangeText={(reg_fio) => this.changeFio(reg_fio)}*/}
+                            {/*        underlineColorAndroid ='transparent'*/}
+                            {/*        label={*/}
+                            {/*            <Text*/}
+                            {/*                style={[*/}
+                            {/*                    {color: !this.state.reg_fio_error ? '#55545F' : '#A4223C'},*/}
+                            {/*                    {color: this.state.reg_fio_valid ? '#337363' : '#55545F'},*/}
+                            {/*                ]*/}
+                            {/*                }>*/}
+                            {/*                Ф. И. О*/}
+                            {/*            </Text>*/}
+                            {/*        }*/}
+                            {/*        error={false}*/}
+                            {/*        underlineColor='transparent'*/}
+                            {/*        style={[*/}
+
+                            {/*            styles.input,*/}
+                            {/*            this.state.reg_fio_valid && {*/}
+                            {/*                borderWidth:1, borderColor:'#337363'*/}
+                            {/*            }*/}
+                            {/*        ]}*/}
+                            {/*        theme={{colors: {text: '#55545F', primary: 'transparent'}}}*/}
+                            {/*        selectionColor='#E1C1B7'*/}
+
+                            {/*        activeOutlineColor='transparent'*/}
+                            {/*    />*/}
+
+
+                            {/*    {this.state.reg_fio_error ?*/}
+
+                            {/*        <Text style={[styles.inp_buttom_label, {color:'#A4223C',marginBottom: 6, position:'absolute', bottom:-1}]}>*/}
+                            {/*            Введите ФИО*/}
+                            {/*        </Text>*/}
+                            {/*        :*/}
+                            {/*        (*/}
+                            {/*            !this.state.reg_fio_valid &&*/}
+                            {/*            <Text style={[styles.inp_buttom_label, {marginBottom: 6, position:'absolute', bottom:-1}]}>*/}
+                            {/*                Введите фамилию, имя, отчество*/}
+                            {/*            </Text>*/}
+                            {/*        )*/}
+
+
+                            {/*    }*/}
+
+                            {/*</View>*/}
+
+
+                            {/*Register Email START*/}
+
                             <View style={styles.inputWrapper}>
 
-                                {this.state.reg_login_error &&
+                                {this.state.reg_email_error &&
 
                                     <TouchableOpacity style={styles.emptyInput}
-                                        onPress={()=>this.clearLoginInput()}
+                                                      onPress={()=>this.clearRegEmailInput()}
                                     >
                                         <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >
                                             <Path fillRule="evenodd" clipRule="evenodd" d="M23 12c0 6.075-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11zm1 0c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zM9.354 8.646a.5.5 0 10-.708.708L11.293 12l-2.647 2.646a.5.5 0 00.708.708L12 12.707l2.646 2.647a.5.5 0 00.708-.708L12.707 12l2.647-2.646a.5.5 0 00-.708-.708L12 11.293 9.354 8.646z" fill="#A4223C"/>
@@ -1671,7 +1886,7 @@ export default class App extends Component {
 
                                 }
 
-                                {this.state.reg_login_valid &&
+                                {this.state.reg_email_valid &&
 
                                     <TouchableOpacity style={styles.emptyInput}>
                                         <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >
@@ -1683,120 +1898,56 @@ export default class App extends Component {
 
 
                                 <TextInput
-                                    value={this.state.reg_login}
-                                    onChangeText={(reg_login) => this.changeRegisterlogin(reg_login)}
+                                    value={this.state.reg_email}
+                                    onChangeText={(reg_email) => this.changeRegisterEmail(reg_email)}
+                                    // onBlur={(reg_email) => this.onBlurRegisterEmail()}
                                     style={[
-
                                         styles.input,
-                                        this.state.reg_login_error && {
+                                        this.state.reg_email_error && {
                                             borderWidth:1, borderColor:'#A4223C'
                                         },
-                                        this.state.reg_login_valid && {
+                                        this.state.reg_email_valid && {
                                             borderWidth:1, borderColor:'#337363'
                                         }
                                     ]}
-                                    underlineColorAndroid ='transparent'
                                     label={
                                         <Text
                                             style={[
-                                                {color: !this.state.reg_login_error ? '#55545F' : '#A4223C'},
-                                                {color: this.state.reg_login_valid ? '#337363' : '#55545F'},
-                                            ]
-                                            }>
-                                            Логин <Text style={{color:'red'}}>*</Text>
+                                                {color: this.state.reg_email_error ? '#A4223C' :  this.state.reg_email_valid ? '#337363' : '#55545F'  },
+                                            ]}
+                                        >
+                                            E-mail <Text style={{color:'red'}}>*</Text>
                                         </Text>
                                     }
-                                    error={false}
-                                    onBlur={() => this.onBlurRegisterLogin()}
                                     theme={{colors: {text: '#55545F', primary: 'transparent'}}}
                                     underlineColor='transparent'
+                                    underlineColorAndroid ='transparent'
                                     selectionColor='#E1C1B7'
                                     activeOutlineColor='transparent'
-
                                 />
 
 
-                                {this.state.reg_login_error ?
+                                {this.state.reg_email_error ?
 
                                     <Text style={[styles.inp_buttom_label, {color:'#A4223C', marginBottom: 6, position:'absolute', bottom:-1}]}>
-                                        {this.state.reg_login_error_text}
-                                    </Text>
-
-                                    :
-
-                                    (
-                                        !this.state.reg_login_valid &&
-                                        <Text style={[styles.inp_buttom_label, { marginBottom: 6, position:'absolute', bottom:-1}]}>
-                                            Введите свой логин
-                                        </Text>
-                                    )
-
-                                }
-                            </View>
-
-                            {/*FIO*/}
-
-                            <View style={styles.inputWrapper}>
-
-                                {this.state.reg_fio_valid &&
-
-                                    <TouchableOpacity style={styles.emptyInput}>
-                                        <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >
-                                            <Path  fillRule="evenodd"  clipRule="evenodd"  d="M23 12c0 6.075-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11zm1 0c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-8.09-2.917a.66.66 0 01.442-.197.547.547 0 01.427.176c.248.228.248.62.02.87l-4.758 4.985a.626.626 0 01-.91-.02l-2.71-2.918a.62.62 0 01.041-.869.619.619 0 01.869.042l2.255 2.42 4.324-4.49z"  fill="#337363"/>
-                                        </Svg>
-                                    </TouchableOpacity>
-
-                                }
-
-                                <TextInput
-                                    value={this.state.reg_fio}
-                                    onChangeText={(reg_fio) => this.changeFio(reg_fio)}
-                                    underlineColorAndroid ='transparent'
-                                    label={
-                                        <Text
-                                            style={[
-                                                {color: !this.state.reg_fio_error ? '#55545F' : '#A4223C'},
-                                                {color: this.state.reg_fio_valid ? '#337363' : '#55545F'},
-                                            ]
-                                            }>
-                                            Ф. И. О
-                                        </Text>
-                                    }
-                                    error={false}
-                                    underlineColor='transparent'
-                                    style={[
-
-                                        styles.input,
-                                        this.state.reg_fio_valid && {
-                                            borderWidth:1, borderColor:'#337363'
-                                        }
-                                    ]}
-                                    theme={{colors: {text: '#55545F', primary: 'transparent'}}}
-                                    selectionColor='#E1C1B7'
-
-                                    activeOutlineColor='transparent'
-                                />
-
-
-                                {this.state.reg_fio_error ?
-
-                                    <Text style={[styles.inp_buttom_label, {color:'#A4223C',marginBottom: 6, position:'absolute', bottom:-1}]}>
-                                        Введите ФИО
+                                        {this.state.reg_email_error_text}
                                     </Text>
                                     :
                                     (
-                                        !this.state.reg_fio_valid &&
+                                        !this.state.reg_email_valid &&
+
                                         <Text style={[styles.inp_buttom_label, {marginBottom: 6, position:'absolute', bottom:-1}]}>
-                                            Введите фамилию, имя, отчество
+                                            Введите адрес электронной почты
                                         </Text>
                                     )
-
-
                                 }
 
                             </View>
 
-                            {/*Phone*/}
+                            {/*Register Email END*/}
+
+
+                            {/*Register Phone START*/}
 
                             <View style={styles.inputWrapper}>
 
@@ -1875,7 +2026,9 @@ export default class App extends Component {
                                         //console.log(masked); // (99) 99999-9999
                                         //console.log(unmasked); // 99999999999
                                     }}
-                                    mask={[ '+', /\d/, /\d/,/\d/, ' ', '(', /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/,  '-', /\d/,/\d/,'-', /\d/, /\d/, ]}
+                                    mask={[ '+', /\d/, /\d/,/\d/, /\d/, /\d/, /\d/, /\d/, /\d/,  /\d/,/\d/, /\d/, /\d/,  /\d/, /\d/, ]}
+                                    // mask={[ '+', /\d/, /\d/,/\d/, ' ', '(', /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/,  '-', /\d/,/\d/,'-', /\d/, /\d/, ]}
+                                    // mask={[ '+' ]}
                                 />
 
 
@@ -1891,88 +2044,18 @@ export default class App extends Component {
                                     (
                                         !this.state.reg_phone_valid &&
                                         <Text style={[styles.inp_buttom_label, {marginBottom: 6, position:'absolute', bottom:-1}]}>
-                                            Введите телефон в формате +375 (__) ___-__-__
+                                            {/*Введите телефон в формате +375 (__) ___-__-__*/}
+                                            Введите телефон
                                         </Text>
                                     )
                                 }
 
                             </View>
 
-                            {/*Email*/}
-
-                            <View style={styles.inputWrapper}>
-
-                                {this.state.reg_email_error &&
-
-                                    <TouchableOpacity style={styles.emptyInput}
-                                        onPress={()=>this.clearRegEmailInput()}
-                                    >
-                                        <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >
-                                            <Path fillRule="evenodd" clipRule="evenodd" d="M23 12c0 6.075-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11zm1 0c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zM9.354 8.646a.5.5 0 10-.708.708L11.293 12l-2.647 2.646a.5.5 0 00.708.708L12 12.707l2.646 2.647a.5.5 0 00.708-.708L12.707 12l2.647-2.646a.5.5 0 00-.708-.708L12 11.293 9.354 8.646z" fill="#A4223C"/>
-                                        </Svg>
-                                    </TouchableOpacity>
-
-                                }
-
-                                {this.state.reg_email_valid &&
-
-                                    <TouchableOpacity style={styles.emptyInput}>
-                                        <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >
-                                            <Path  fillRule="evenodd"  clipRule="evenodd"  d="M23 12c0 6.075-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11zm1 0c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-8.09-2.917a.66.66 0 01.442-.197.547.547 0 01.427.176c.248.228.248.62.02.87l-4.758 4.985a.626.626 0 01-.91-.02l-2.71-2.918a.62.62 0 01.041-.869.619.619 0 01.869.042l2.255 2.42 4.324-4.49z"  fill="#337363"/>
-                                        </Svg>
-                                    </TouchableOpacity>
-
-                                }
+                            {/*Register Phone END*/}
 
 
-                                <TextInput
-                                    value={this.state.reg_email}
-                                    onChangeText={(reg_email) => this.changeRegisterEmail(reg_email)}
-                                    // onBlur={(reg_email) => this.onBlurRegisterEmail()}
-                                    style={[
-                                        styles.input,
-                                        this.state.reg_email_error && {
-                                            borderWidth:1, borderColor:'#A4223C'
-                                        },
-                                        this.state.reg_email_valid && {
-                                            borderWidth:1, borderColor:'#337363'
-                                        }
-                                    ]}
-                                    label={
-                                        <Text
-                                            style={[
-                                                {color: this.state.reg_email_error ? '#A4223C' :  this.state.reg_email_valid ? '#337363' : '#55545F'  },
-                                            ]}
-                                        >
-                                            E-mail <Text style={{color:'red'}}>*</Text>
-                                        </Text>
-                                    }
-                                    theme={{colors: {text: '#55545F', primary: 'transparent'}}}
-                                    underlineColor='transparent'
-                                    underlineColorAndroid ='transparent'
-                                    selectionColor='#E1C1B7'
-                                    activeOutlineColor='transparent'
-                                />
-
-
-                                {this.state.reg_email_error ?
-
-                                    <Text style={[styles.inp_buttom_label, {color:'#A4223C', marginBottom: 6, position:'absolute', bottom:-1}]}>
-                                        {this.state.reg_email_error_text}
-                                    </Text>
-                                    :
-                                    (
-                                        !this.state.reg_email_valid &&
-
-                                        <Text style={[styles.inp_buttom_label, {marginBottom: 6, position:'absolute', bottom:-1}]}>
-                                            Введите адрес электронной почты
-                                        </Text>
-                                    )
-                                }
-
-                            </View>
-
-                            {/*Password*/}
+                            {/*Register Password START*/}
 
                             <View style={styles.inputWrapper}>
 
@@ -2049,7 +2132,9 @@ export default class App extends Component {
 
                             </View>
 
-                            {/*Confirm Password*/}
+                            {/*Register Password END*/}
+
+                            {/*Register Confirm Password START*/}
 
                             <View style={styles.inputWrapper}>
 
@@ -2125,6 +2210,8 @@ export default class App extends Component {
 
 
                             </View>
+
+                            {/*Register Confirm Password END*/}
 
 
                         </ScrollView>

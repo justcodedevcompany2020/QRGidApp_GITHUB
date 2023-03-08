@@ -195,11 +195,6 @@ export default class App extends React.Component {
             region_gps: region_gps,
         }
 
-
-        // console.log(selected_region, 'SET selected_region')
-        // console.log(selected_oblast_and_region, 'SET selected_oblast_and_region')
-
-
         await AsyncStorage.setItem('selected_oblast_and_region', JSON.stringify(selected_oblast_and_region) )
         this.closeChangeTerrain()
 
@@ -342,7 +337,7 @@ export default class App extends React.Component {
                                 valueField="value"
                                 value={this.state.selected_oblast}
                                 // dropdownPosition='top'
-                                containerStyle={{position: 'absolute', top: -88, borderBottomLeftRadius: 8, borderBottomRightRadius:15, overflow:'hidden',borderRadius: 8,}}
+                                containerStyle={{position: 'absolute', top: 0, borderBottomLeftRadius: 8, borderBottomRightRadius:15, overflow:'hidden',borderRadius: 8,}}
                                 onChange={item => {
                                    this.changeOblast(item)
                                 }}
@@ -363,12 +358,9 @@ export default class App extends React.Component {
                                 valueField="value"
                                 value={this.state.selected_region}
 
-                                containerStyle={{position: 'absolute', top: -88, borderBottomLeftRadius: 8, borderBottomRightRadius:8, overflow:'hidden', borderRadius: 8,}}
+                                containerStyle={{position: 'absolute', top: 0, borderBottomLeftRadius: 8, borderBottomRightRadius:8, overflow:'hidden', borderRadius: 8,}}
                                 onChange={item => {
-
                                      this.changeRegion(item)
-
-
                                 }}
                             />
 

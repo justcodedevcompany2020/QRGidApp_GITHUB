@@ -62,7 +62,8 @@ const windowHeight = Dimensions.get('window').height;
 // import DropDownPicker from 'react-native-dropdown-picker';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as Font from "expo-font";
-
+import RemoveAccount from '../../assets/deleteSvg';
+import CloseSvg from '../../assets/closeSvg';
 import {
     useFonts,
     Ubuntu_300Light,
@@ -187,7 +188,10 @@ export default class App extends React.Component {
             fontsLoaded: false,
 
             imageLoaded: true,
+            remove_account_modal: false,
+            remove_account_last_modal: false,
 
+            cancel_remove_account: false
         }
 
         this.handler = this.handler.bind(this)
@@ -266,6 +270,7 @@ export default class App extends React.Component {
     }
 
     logout = () => {
+
         this.context.signOut();
         this.props.navigation.navigate('Dashboard')
     }
@@ -458,7 +463,7 @@ export default class App extends React.Component {
     }
 
 
-    changeRegisterPhone = ( edit_phone_masked, edit_phone) => {
+    changeEditPhone = ( edit_phone_masked, edit_phone) => {
 
         edit_phone = '+' +edit_phone;
 
@@ -471,7 +476,8 @@ export default class App extends React.Component {
             edit_phone:edit_phone,
             edit_phone_masked: edit_phone_masked
         })
-        var phonereg = /[+]375[0-9]{9}/;
+        // var phonereg = /[+]375[0-9]{9}/;
+        var phonereg = /[+]/;
 
 
 
@@ -484,7 +490,7 @@ export default class App extends React.Component {
 
         } else {
 
-            if (edit_phone.match(phonereg)) {
+            if (edit_phone.match(phonereg) && edit_phone.length > 6) {
                 this.setState({
                     edit_phone_error:false,
                     edit_phone_valid:true,
@@ -1178,8 +1184,6 @@ export default class App extends React.Component {
                 alert('Please use correct image format ')
             }
 
-
-
         } else {
             this.setState({
                 imageLoaded: true
@@ -1193,7 +1197,6 @@ export default class App extends React.Component {
         await AsyncStorage.getItem('language',(err,item) => {
 
             let language = item ? JSON.parse(item) : {};
-
 
 
             if (language.hasOwnProperty('language')) {
@@ -1307,6 +1310,65 @@ export default class App extends React.Component {
 
     }
 
+
+
+    closeRemoveAccountModal  = async () => {
+        this.setState({
+            remove_account_modal: false
+        })
+    }
+
+    openRemoveAccountLastModal  = async () => {
+
+        await this.setState({
+            remove_account_modal: false,
+            remove_account_last_modal: true
+        })
+
+
+
+
+
+
+        setTimeout(async () => {
+
+
+            if(!this.state.cancel_remove_account)
+            {
+                // Remove
+                console.log('REMOVE USER')
+
+                let id_user = await AsyncStorage.getItem('userId');
+
+                console.log(id_user, 'id_user')
+                let req = {
+                    id: id_user,
+                }
+                axios.post('https://qr-gid.by/api/auth/del/', req).then((response) => {
+
+                    console.log('responseresponse',typeof response.data, response.data,  'responseresponseresponse')
+                    if(response.data === true)
+                    {
+                        this.logout();
+                    }
+
+
+                });
+
+
+            } else {
+                console.log('CANCEL REMOVE')
+
+            }
+
+
+            await this.setState({
+                remove_account_modal: false,
+                remove_account_last_modal: false,
+                cancel_remove_account: false
+            })
+        }, 5000)
+    }
 
     render() {
 
@@ -2020,15 +2082,16 @@ export default class App extends React.Component {
                                             ]}
                                             value={this.state.edit_phone_masked}
                                             onChangeText={(masked, unmasked) => {
-                                                this.changeRegisterPhone(masked,unmasked);
+                                                this.changeEditPhone(masked,unmasked);
                                             }}
-                                            mask={[ '+', /\d/, /\d/,/\d/, ' ', '(', /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/,  '-', /\d/,/\d/,'-', /\d/, /\d/, ]}
+                                            mask={[ '+', /\d/, /\d/,/\d/, /\d/, /\d/, /\d/, /\d/, /\d/,  /\d/,/\d/, /\d/, /\d/,  /\d/, /\d/, ]}
+                                            // mask={[ '+', /\d/, /\d/,/\d/, ' ', '(', /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/,  '-', /\d/,/\d/,'-', /\d/, /\d/, ]}
                                         />
 
 
                                         {/*<TextInput*/}
                                         {/*    value={this.state.edit_phone}*/}
-                                        {/*    onChangeText={(edit_phone) => this.changeRegisterPhone(edit_phone)}*/}
+                                        {/*    onChangeText={(edit_phone) => this.changeEditPhone(edit_phone)}*/}
                                         {/*    underlineColorAndroid ='transparent'*/}
                                         {/*    label={*/}
                                         {/*        <Text*/}
@@ -2849,11 +2912,145 @@ export default class App extends React.Component {
                         {/*</Shadow>*/}
 
 
+                        <TouchableOpacity
+                            style={[styles.remove_account_button ]}
+                            onPress={() => {
+                                this.setState({
+                                    remove_account_modal: true
+                                })
+                            }}
+                        >
+                            <RemoveAccount/>
+                            <Text style={styles.remove_account_button_text} >
+                                {this.state.language.remove_profile}
+                            </Text>
+
+                        </TouchableOpacity>
+
 
                     </View>
 
                 </View>
 
+
+
+
+
+
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={this.state.remove_account_modal}
+                >
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+
+                            <View style={{width:'100%', flexDirection:'row'}}>
+
+                                <Text style={styles.modalText}>
+                                    Вы уверены, что хотите удалить профиль?
+                                </Text>
+                               <TouchableOpacity
+                                   style={{}}
+                                   onPress={() => {
+                                       this.closeRemoveAccountModal()
+                                   }}
+                               >
+                                   <CloseSvg/>
+                               </TouchableOpacity>
+
+                            </View>
+
+                            <Text style={{marginTop: 18, color: '#393840', fontSize:14}}>
+                                Вы потеряете все сохраненные места и историю отзывов.
+                            </Text>
+
+
+
+                            <View style={{width:'100%', justifyContent:'flex-end', alignItems:'center',  marginTop:30}}>
+                                <TouchableOpacity
+                                    style={{width:'100%'}}
+                                    onPress={() => {
+                                        this.closeRemoveAccountModal()
+                                    }}
+                                >
+                                    <Text
+                                        style={{
+                                            color: '#55545F',
+                                            fontSize: 14,
+                                            fontWeight: '500',
+                                            marginBottom: 33,
+                                            textAlign: 'right'
+                                        }}
+                                    >НЕТ, ВЕРНУТЬСЯ В КАБИНЕТ</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={{width:'100%'}}
+                                    onPress={() => {
+                                        this.openRemoveAccountLastModal()
+                                    }}
+                                >
+                                    <Text
+                                        style={{
+                                            color: '#A4223C',
+                                            fontSize: 14,
+                                            fontWeight: '500',
+                                            textAlign:'right'
+                                        }}
+                                    >ДА, УДАЛИТЬ ПРОФИЛЬ</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+
+
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={this.state.remove_account_last_modal}
+                >
+                    <View style={{width:'100%',  height:'100%',  justifyContent:'flex-end', padding: 16, }}>
+
+
+                        <View style={{width: '100%', maxWidth: 328, alignSelf:'center', height: 48, backgroundColor:'#393840',borderRadius: 8, paddingHorizontal:16, justifyContent:'space-between', alignItems:'center', flexDirection:'row'}}>
+
+                            <Text
+                                style={{
+                                    color:'white',
+                                    fontSize: 14,
+                                    fontWeight: '400',
+                                    textAlign:'left'
+                                }}
+                            >
+                                Профиль удалён
+                            </Text>
+
+                            <TouchableOpacity
+                                // style={{width:'100%'}}
+                                onPress={() => {
+
+                                    this.setState({
+                                        cancel_remove_account:true
+                                    })
+
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        color: '#E1C1B7',
+                                        fontSize: 14,
+                                        fontWeight: '500',
+                                        textAlign:'right'
+                                    }}
+                                >ВОССТАНОВИТЬ</Text>
+                            </TouchableOpacity>
+
+                        </View>
+
+                    </View>
+                </Modal>
 
 
             </SafeAreaView>
@@ -3041,22 +3238,31 @@ const styles = StyleSheet.create({
         borderWidth:1,
         borderColor:'#9F9EAE',
         flexDirection:'row'
-
-        // shadowColor: "#000",
-        // shadowOffset: {
-        //     width: 2,
-        //     height: 2,
-        // },
-        // shadowOpacity: 2,
-        // shadowRadius: 2,
-        // elevation: 2
-
+    },
+    remove_account_button: {
+        width:'100%',
+        maxWidth:328,
+        // backgroundColor:'#E1C1B7',
+        height:38,
+        alignItems:'center',
+        justifyContent:'center',
+        borderRadius:8,
+        marginHorizontal:16,
+        marginBottom:26,
+        flexDirection:'row'
     },
 
     logout_button_text:{
         color:'#54535F',
         fontSize:14,
         marginLeft: 8
+    },
+
+    remove_account_button_text:{
+        color:'#A4223C',
+        fontSize:14,
+        marginLeft: 11,
+        fontWeight: '500'
     },
     logout_button_wrapper:{
         width:'100%',
@@ -3190,7 +3396,47 @@ const styles = StyleSheet.create({
         backgroundColor:'white',
     },
 
+    centeredView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 22,
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: '#FDF2ED',
+        borderRadius: 18,
+        padding: 20,
+        alignItems: 'flex-start',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+        maxWidth:280,
+        width:'100%'
+    },
+    mapsModal:{
+        borderRadius: 18,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
 
+    modalText: {
+        flex: 1,
+        fontSize:20,
+        color: '#1D1D20',
+        fontWeight:'500'
+    }
     //
     // mainView: {
     //     backgroundColor:'#E1C1B7',

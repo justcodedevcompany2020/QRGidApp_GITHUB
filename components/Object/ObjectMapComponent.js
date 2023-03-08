@@ -673,6 +673,7 @@ export default class App extends React.Component {
                 id_obj:id_obj,
                 id_user: id_user
             }
+            console.log(req, 'reqreqreq')
 
             let url = 'https://qr-gid.by/api/by/favorite/list/';
 
