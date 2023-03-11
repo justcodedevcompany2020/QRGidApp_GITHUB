@@ -1326,10 +1326,6 @@ export default class App extends React.Component {
         })
 
 
-
-
-
-
         setTimeout(async () => {
 
 
@@ -2835,8 +2831,6 @@ export default class App extends React.Component {
                                         </Text>
                                     </View>
 
-
-
                                     <View style={styles.info2ItemWrapper}>
                                         <View style={styles.info2ItemLeft}>
                                             <Svg width={18} height={18} viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2849,8 +2843,6 @@ export default class App extends React.Component {
                                         </Text>
                                     </View>
 
-
-
                                     <View style={[styles.info2ItemWrapper, {marginBottom:24}]}>
                                         <View style={styles.info2ItemLeft}>
                                             <Svg width={18} height={18} viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2862,9 +2854,6 @@ export default class App extends React.Component {
                                             {this.state.EMAIL}
                                         </Text>
                                     </View>
-
-
-
 
                                     <View style={styles.editProfileButtonWrapper}>
                                         <TouchableOpacity style={styles.editProfileButton} onPress={() => this.openEditModal()}>
@@ -2879,13 +2868,8 @@ export default class App extends React.Component {
                                         </TouchableOpacity>
                                     </View>
 
-
-
-
                                 </View>
-
                             </View>
-
 
                     </ScrollView>
 
@@ -2933,10 +2917,6 @@ export default class App extends React.Component {
                 </View>
 
 
-
-
-
-
                 <Modal
                     animationType="slide"
                     transparent={true}
@@ -2948,7 +2928,8 @@ export default class App extends React.Component {
                             <View style={{width:'100%', flexDirection:'row'}}>
 
                                 <Text style={styles.modalText}>
-                                    Вы уверены, что хотите удалить профиль?
+                                    {/*Вы уверены, что хотите удалить профиль?*/}
+                                    {this.state.language.are_you_sure_you_want_to_delete_the_profile}
                                 </Text>
                                <TouchableOpacity
                                    style={{}}
@@ -2964,8 +2945,6 @@ export default class App extends React.Component {
                             <Text style={{marginTop: 18, color: '#393840', fontSize:14}}>
                                 Вы потеряете все сохраненные места и историю отзывов.
                             </Text>
-
-
 
                             <View style={{width:'100%', justifyContent:'flex-end', alignItems:'center',  marginTop:30}}>
                                 <TouchableOpacity
@@ -3030,11 +3009,10 @@ export default class App extends React.Component {
                             <TouchableOpacity
                                 // style={{width:'100%'}}
                                 onPress={() => {
-
                                     this.setState({
+                                        remove_account_last_modal: false,
                                         cancel_remove_account:true
                                     })
-
                                 }}
                             >
                                 <Text
