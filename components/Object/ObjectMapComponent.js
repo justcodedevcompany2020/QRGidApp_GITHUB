@@ -62,6 +62,12 @@ import DostArhitectura from '../../assets/Icons/dostoprimechatelnosti/dost_arhit
 import DostReligia from '../../assets/Icons/dostoprimechatelnosti/dost_religia'
 import DostMuseum from '../../assets/Icons/dostoprimechatelnosti/dost_museum'
 
+
+import ObrazovanieSvg from '../../assets/svg/ObrazovanieSvg'
+import ZrelishnieUchrezhdeniyaSvg from '../../assets/svg/ZrelishnieUchrezhdeniyaSvg'
+import ZrelishnieUchrezhdeniyaForFilterSvg from '../../assets/svg/ZrelishnieUchrezhdeniyaForFilterSvg'
+
+
 // Categories icon
 
 
@@ -950,6 +956,8 @@ export default class App extends React.Component {
         // IBLOCK_ID = 18 = Достопримечательности
 
         let { IBLOCK_ID, TYPE_OBJ } = marker;
+
+        console.log(marker, '---------marker-------')
         let new_type_obj = '';
         let type_object_key = '';
 
@@ -994,6 +1002,12 @@ export default class App extends React.Component {
                     break;
                 case '5': //"Базы отдыха":
                     returnIcon =  <InfrBazaOtdyxa/>
+                    break;
+                case '30': //"Зрелищные учреждения":
+                    returnIcon =  <ZrelishnieUchrezhdeniyaSvg/>
+                    break;
+                case '31': //"Образование":
+                    returnIcon =  <ObrazovanieSvg/>
                     break;
             }
 
@@ -1122,8 +1136,12 @@ export default class App extends React.Component {
             case '30':
                 returnIcon =  <Dosug/>
                 break;
+            case '31':
+                returnIcon =  <ZrelishnieUchrezhdeniyaForFilterSvg/>
+                break;
         }
 
+        
 
         return (
             returnIcon

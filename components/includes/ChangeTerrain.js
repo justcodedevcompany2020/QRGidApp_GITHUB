@@ -273,20 +273,14 @@ export default class App extends React.Component {
     }
 
     changeRegion = async (item) => {
-
         await this.setState({
             selected_region: item.value,
             region_gps: item.GPS
         })
-
-
     }
 
      componentDidMount() {
-
          this.setLanguageFromStorage();
-
-
     }
 
 

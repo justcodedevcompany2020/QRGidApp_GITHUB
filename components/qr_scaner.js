@@ -50,17 +50,67 @@ export default function App(props) {
     const [show_location_required_text, setShowLocationRequiredText] = useState(false);
     const [show_loader_after_scan, setShowLoaderAfterScan] = useState(false);
     const { navigation } = props;
+    const [ipAddress, setIpAddress] = useState('');
 
     const goToDashboard = () => {
         setScanned(true);
         navigation.navigate('Dashboard')
     }
 
+    // async function getLastNews(){
+    //     await fetch('http://95.163.237.160:8004/api/v1/news-last/',
+    //         {
+    //                method: 'GET',
+    //              // headers: { 'Content-Type': 'application/json' },
+    //         })
+    //         .then(response => response.json())
+    //         .then(res => {
+    //             // let lastNews = {
+    //             //     buttonName: res.button_name ?? null,
+    //             //     buttonUrl: res.button_url ?? null,
+    //             //     title: res.title,
+    //             //     id: res.id,
+    //             //     images: res.images,
+    //             //     description: res.descriptions
+    //             // }
+    //             console.log(res, 'res')
+    //         })
+    // }
+
+
+
+    useEffect(() => {
+
+
+
+
+
+        axios.get('https://api.ipify.org?format=json')
+            .then(response => {
+                setIpAddress(response.data.ip)
+                console.log(response.data, 'response.data')
+            })
+            .catch(error => console.log(error));
+
+    }, [])
+
     useEffect(() => {
         (async () => {
 
             const unsubscribe = navigation.addListener('focus', async ()  =>  {
 
+                // Если что удалить
+                const { status } = await Camera.requestCameraPermissionsAsync();
+                setHasPermission(status === 'granted');
+
+                if (status !== 'granted')
+                {
+                    setTimeout(()=>{
+                        navigation.navigate('Dashboard')
+                    }, 2000)
+                }
+
+                // Если что удалить
 
                 await AsyncStorage.getItem('language',async (err,item) => {
 
@@ -77,14 +127,15 @@ export default function App(props) {
                     setLanguage(set_language)
                     setLanguageName(language_name)
 
-                    const { status } = await Camera.requestCameraPermissionsAsync();
-                    setHasPermission(status === 'granted');
+                    // const { status } = await Camera.requestCameraPermissionsAsync();
+                    // setHasPermission(status === 'granted');
 
                 })
 
             });
         })();
     }, []);
+
 
 
     const handleBarCodeScanned = async ({ type, data }) => {
@@ -111,8 +162,8 @@ export default function App(props) {
                         // return;
                     } else {
 
-                        setShowLocationRequiredText(false)
-                        setShowLoaderAfterScan(true)
+                        setShowLocationRequiredText(false);
+                        setShowLoaderAfterScan(true);
 
                         let location = await Location.getCurrentPositionAsync({});
                         let url = 'https://qr-gid.by/api/detail/?';
@@ -133,20 +184,49 @@ export default function App(props) {
                         // if (data_arr2.length == 2) {
 
                         let user_id = await AsyncStorage.getItem('userId');
-                        let req = {
+                        let req_for_object = {
                             ID:data_arr[1],
                             coords: location.coords.latitude + ',' + location.coords.longitude ,
                             no_redirect:true,
                             user_id: user_id
                         }
 
-                        axios.post(url,req).then((response) => {
-                            // console.log(response.data);
-                            setShowLoaderAfterScan(false)
 
-                            navigation.navigate('Object', {
-                                params: response.data,
-                            })
+                        // Set history
+
+                        let request_detail = JSON.stringify({
+                            url: url,
+                            data: {
+                                ID:data_arr[1],
+                                coords: location.coords.latitude + ',' + location.coords.longitude ,
+                                no_redirect:true,
+                                user_id: user_id
+                            }
+                        })
+
+                        let req_for_history = {
+                            request_detail: request_detail,
+                            gps_user: location.coords.latitude + ',' + location.coords.longitude,
+                            ip_user:ipAddress,
+                            id_user: user_id
+                        }
+
+                        console.log(req_for_history, 'req_for_history')
+
+                        axios.post('https://qr-gid.by/api/sys_events/',req_for_history).then((response) => {
+
+                            console.log(response.data);
+                            // Get Object data
+
+                            axios.post(url,req_for_object).then((response) => {
+                                // console.log(response.data);
+                                setShowLoaderAfterScan(false);
+                                navigation.navigate('Object', {
+                                    params: response.data,
+                                })
+                            });
+
+
                         });
 
 
@@ -170,12 +250,12 @@ export default function App(props) {
 
     };
 
-    if (hasPermission === null) {
-        return <View />;
-    }
-    if (hasPermission === false) {
-        return <Text>No access to camera</Text>;
-    }
+    // if (hasPermission === null) {
+    //     return <View />;
+    // }
+    // if (hasPermission === false) {
+    //     return <Text>No access to camera</Text>;
+    // }
     return (
         <SafeAreaView style={styles.container}>
             <View style={ styles.topPanel}>

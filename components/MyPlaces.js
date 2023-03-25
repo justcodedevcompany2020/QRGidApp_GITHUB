@@ -94,7 +94,7 @@ export default class App extends React.Component {
         this.setState({
             isOpenChangeTerrain: false
         })
-
+        this.props.navigation.navigate('ObjectMap')
     }
 
     goToObjectsMap() {
@@ -491,8 +491,9 @@ export default class App extends React.Component {
                                                     </Svg>
                                                 </TouchableOpacity>
 
-
-                                                <Image style={styles.myPlacesItemRightImage} source={{uri: item.picture}} />
+                                                {item.picture != '' &&
+                                                    <Image style={styles.myPlacesItemRightImage} source={{uri: item.picture}} />
+                                                }
                                             </View>
 
                                         </View>
@@ -502,14 +503,12 @@ export default class App extends React.Component {
                                                 style={styles.openObject}
                                                 // onPress={() => this.goToQrScaner()}
                                                 onPress={() => {this.openSingleObject(item.id_obj)}}
-
                                             >
                                                 <Text style={{color:'#8F7000'}}>
                                                     {/*ОПИСАНИЕ*/}
                                                     {this.state.language.about_object_text}
                                                 </Text>
                                             </TouchableOpacity>
-
 
                                             {/*<TouchableOpacity*/}
                                             {/*    style={styles.addInMarshrut}*/}
@@ -518,9 +517,7 @@ export default class App extends React.Component {
                                             {/*    <Text style={{color:'#076388'}}>ДОБАВИТЬ В МАРШРУТ</Text>*/}
                                             {/*</TouchableOpacity>*/}
 
-
                                         </View>
-
                                     </View>
 
                                 )

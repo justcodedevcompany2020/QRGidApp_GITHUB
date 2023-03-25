@@ -136,7 +136,7 @@ const LOOPING_TYPE_ICONS = { 0: ICON_LOOP_ALL_BUTTON, 1: ICON_LOOP_ONE_BUTTON };
 
 const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT } = Dimensions.get("window");
 
-console.log(DEVICE_HEIGHT);
+// console.log(DEVICE_HEIGHT);
 
 const BACKGROUND_COLOR = "#FFF8ED";
 const DISABLED_OPACITY = 0.5;
@@ -161,6 +161,7 @@ import {
 } from '@expo-google-fonts/ubuntu';
 import {FiraSans_400Regular, FiraSans_500Medium} from "@expo-google-fonts/fira-sans";
 import * as Font from "expo-font";
+import StarSvg from "../../assets/svg/StarSvg";
 
 
 export default class App extends React.Component {
@@ -170,6 +171,7 @@ export default class App extends React.Component {
         this.index = 0;
         this.isSeeking = false;
         this.state = {
+            language_name: 'ru',
             showVideo: false,
             playbackInstanceName: LOADING_STRING,
             loopingType: LOOPING_TYPE_ONE,
@@ -235,10 +237,12 @@ export default class App extends React.Component {
                 "https://source.unsplash.com/1024x768/?tree", // Network image
             ],
             activeTab : 0,
-            current_image: this.props.object_data.data.PROPERTIES.MORE_PHOTO.VALUE.length > 0 ? 1 : 0,
+            current_image: this.props.object_data.data.PROPERTIES.hasOwnProperty('MORE_PHOTO') && this.props.object_data.data.PROPERTIES.MORE_PHOTO.VALUE.length > 0 ? 1 : 0,
+            // current_image: 1,
             current_slide_index_for_slider: 0,
             singer_name: '',
             isOpenChangeTerrain: false,
+
 
 
 
@@ -356,8 +360,9 @@ export default class App extends React.Component {
             fontsLoaded: false,
             //Default_Rating: 0,//To set the default Star Selected
             prev15_active: true,
-            next15_active: true
-
+            next15_active: true,
+            obj_vote: 0,
+            user_vote: 0
 
         };
         this.shouldPlayAtEndOfSeek = false;
@@ -373,10 +378,13 @@ export default class App extends React.Component {
     }
 
     UpdateRating(rating) {
-        console.log(rating, 'rating')
+        // console.log(rating, 'rating')
         this.setState({
             starCount: rating
         });
+
+        this.sendStarHandler(rating)
+
         //Keeping the Rating Selected in state
     }
 
@@ -384,11 +392,11 @@ export default class App extends React.Component {
         this.setState({
             isOpenChangeTerrain: false
         })
-
+        this.props.navigation.navigate('ObjectMap')
     }
 
     onStarRatingPress(rating) {
-        console.log(rating, 'rating')
+        // console.log(rating, 'rating')
         this.setState({
             starCount: rating
         });
@@ -520,7 +528,7 @@ export default class App extends React.Component {
         // console.log(this.props.object_data.data.PROPERTIES.GPS.VALUE[0], 'this.props.object_data.data.PROPERTIES.GPS.VALUE[0]')
 
 
-        console.log(this.props.object_data.data.PROPERTIES, 'this.props.object_data.data.PROPERTIES')
+        // console.log(this.props.object_data.data.PROPERTIES, 'this.props.object_data.data.PROPERTIES')
 
         this.focusListener = navigation.addListener("focus", () => {
 
@@ -567,8 +575,8 @@ export default class App extends React.Component {
     componentDidUpdate(prevProps, prevState) {
 
         if (prevProps.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE !== this.props.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE) {
-            console.log(prevProps.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE)
-            console.log(this.props.object_data.data.PROPERTIES.AUDIOGUIDE.NAME)
+            // console.log(prevProps.object_data.data.PROPERTIES.AUDIOGUIDE.VALUE)
+            // console.log(this.props.object_data.data.PROPERTIES.AUDIOGUIDE.NAME)
 
             console.log('error tut budet')
             // this._loadNewPlaybackInstance(false);
@@ -604,7 +612,7 @@ export default class App extends React.Component {
     sliderImages = () => {
         let images = []
 
-        if(this.props.object_data.data.PROPERTIES.MORE_PHOTO.VALUE){
+        if(this.props.object_data.data.PROPERTIES.hasOwnProperty('MORE_PHOTO') && this.props.object_data.data.PROPERTIES.MORE_PHOTO.VALUE){
 
             if (this.props.object_data.data.PROPERTIES.MORE_PHOTO.VALUE.length > 0)
 
@@ -622,7 +630,7 @@ export default class App extends React.Component {
 
         }
 
-        console.log(images, 'images')
+        // console.log(images, 'images')
 
 
         return images
@@ -1022,7 +1030,8 @@ export default class App extends React.Component {
 
         let working_days = this.state.object_data.data.PROPERTIES.WORKING_DAYS;
 
-        if (working_days.VALUE && typeof working_days.VALUE.MONDAY !== 'undefined' ) {
+        // if (working_days.VALUE && typeof working_days.VALUE.MONDAY !== 'undefined' ) {
+        if (working_days.VALUE &&  working_days.VALUE.hasOwnProperty('MONDAY') ) {
 
             this.setState({
                 MONDAY: working_days.VALUE.MONDAY,
@@ -1425,6 +1434,7 @@ export default class App extends React.Component {
 
         let req = {
             id_obj: id_obj,
+            id_user:id_user,
             num_page: 1,
             count_page: this.state.review_count_page
         }
@@ -1436,12 +1446,13 @@ export default class App extends React.Component {
 
             console.log('responseresponse',data, 'responseresponseresponse')
 
-            if(data.items.length !== 0) {
+            if(data.length !== 0) {
 
                 for (const review_item in data.items) {
                     reviews_data.push(data.items[review_item])
                 }
             }
+
 
             this.setState({
                 reviews_data: reviews_data,
@@ -1451,11 +1462,11 @@ export default class App extends React.Component {
                 reserve_a_table:false,
                 book_a_room: false,
                 restorane_menu: false,
-                reviews_tab: true
+                reviews_tab: true,
+                obj_vote:  data.hasOwnProperty('obj_vote')   &&  data.obj_vote > 0 ?  data.obj_vote : 0,
+                user_vote:  data.hasOwnProperty('user_vote') &&  data.user_vote > 0 ?  data.user_vote : 0,
             })
-
         });
-
     }
 
     minusGuestCountRoom = () => {
@@ -1894,35 +1905,22 @@ export default class App extends React.Component {
 
     }
 
-    sendReviewHandler  = async () => {
+    sendReviewHandler  = async () =>
+    {
+        let {isLogin, review_value,language} = this.state;
 
-        let {isLogin, starCount, review_value} = this.state;
-
-        if(!isLogin) {
-
+        if(!isLogin)
+        {
             this.setState({
                 send_review_modal: true
             })
-
         } else {
-
-            console.log(starCount, 'starCount')
-            // if (review_value === '' || starCount == 0) {
-            if ( starCount == 0) {
-
-
-                // let error_text = review_value === '' ?
-                //     this.state.language.review_required //'Поле отзыва обязательно!'
-                //     :
-                //     starCount == 0
-                //         ? this.state.language.rate_required //'Оценка обязательна!'
-                //         : '';
-                let error_text = starCount == 0
-                        ? this.state.language.rate_required //'Оценка обязательна!'
-                        : '';
+            console.log(review_value, 'starCount');
+            if (review_value === '')
+            {
                 this.setState({
                     sendReviewErrorModal: true,
-                    sendReviewErrorModalText: error_text
+                    sendReviewErrorModalText: language.review_required
                 })
                 return false;
             } else {
@@ -1932,20 +1930,23 @@ export default class App extends React.Component {
                 })
             }
 
-            let id_obj = this.props.object_data.data.ID
+            let id_obj  = this.props.object_data.data.ID
             let id_user = await AsyncStorage.getItem('userId');
 
             let req = {
                 id_obj:id_obj,
                 id_user: id_user,
-                stars:starCount,
+                type: 'review',
                 review: review_value
             }
 
-            console.log(req, 'reviews reviews reviews')
-            axios.post('https://qr-gid.by/api/reviews/add/', req).then((response) => {
+            console.log(req, 'sendReviewHandler');
 
-                console.log(response.data, 'sendReviewHandler')
+            axios.post('https://qr-gid.by/api/reviews/add/', req).then((response) =>
+            {
+
+                console.log(response.data, 'sendReviewHandler');
+                console.log(response.data.success, 'response.data.success');
 
                 if(response.data.success)
                 {
@@ -1954,24 +1955,74 @@ export default class App extends React.Component {
                         starCount: 0,
                         showSuccessAddReviewModal: true
                     })
-
                     this.getReviews();
-
-                } else {
-
                 }
 
-
-                // this.setState({
-                //     isFavourites: true
-                // })
-
             });
+        }
+    }
+    sendStarHandler  = async (starCount) =>
+    {
+        let {isLogin,language} = this.state;
+
+        if(!isLogin)
+        {
+            this.setState({
+                send_review_modal: true
+            })
+        } else {
+            console.log(starCount, 'starCount');
+
+            if (starCount === 0)
+            {
+                this.setState({
+                    sendReviewErrorModal: true,
+                    sendReviewErrorModalText: language.rate_required
+                })
+                return false;
+            } else {
+                this.setState({
+                    sendReviewErrorModal: false,
+                    sendReviewErrorModalText: ''
+                })
+            }
+
+            let id_obj  = this.props.object_data.data.ID
+            let id_user = await AsyncStorage.getItem('userId');
+
+            let req = {
+                id_obj:id_obj,
+                id_user: id_user,
+                type: 'rating',
+                stars: starCount
+            }
+
+            console.log(req, 'sendStarHandler');
+
+            setTimeout( ()=>{
+                axios.post('https://qr-gid.by/api/reviews/add/', req).then((response) =>
+                {
+                    console.log(response.data, 'sendStarHandler')
+                    if(response.data.success)
+                    {
+                        this.setState({
+                            review_value: '',
+                            starCount: 0,
+                            // showSuccessAddReviewModal: true
+                            sendReviewErrorModal: true,
+                            sendReviewErrorModalText: language.rate_form_success_message
+                        })
+                        this.getReviews();
+                    }
+
+                });
+            }, 1000)
 
 
         }
-
     }
+
+
 
 
     clearRegEmailInput = () => {
@@ -2270,6 +2321,7 @@ export default class App extends React.Component {
 
         let req = {
             id_obj: id_obj,
+            id_user:id_user,
             num_page: 1,
             count_page: this.state.review_count_page
         }
@@ -2279,14 +2331,13 @@ export default class App extends React.Component {
             let data = response.data;
             let reviews_data = [];
 
-
-            if(data.items.length !== 0) {
-
+            if(data.length !== 0)
+            {
                 for (const review_item in data.items) {
                     reviews_data.push(data.items[review_item])
                 }
             }
-            console.log('reviews_data',reviews_data, 'reviews_data')
+            console.log('reviews_data',data, 'reviews_data')
 
             this.setState({
                 reviews_data: reviews_data,
@@ -2296,7 +2347,9 @@ export default class App extends React.Component {
                 reserve_a_table:false,
                 book_a_room: false,
                 restorane_menu: false,
-                reviews_tab: true
+                reviews_tab: true,
+                obj_vote:  data.hasOwnProperty('obj_vote')   &&  data.obj_vote > 0 ?  data.obj_vote : 0,
+                user_vote:  data.hasOwnProperty('user_vote') &&  data.user_vote > 0 ?  data.user_vote : 0
 
             })
 
@@ -2390,7 +2443,7 @@ export default class App extends React.Component {
 
             address: '',
             fontsLoaded: false,
-            current_image: this.props.object_data.data.PROPERTIES.MORE_PHOTO.VALUE.length > 0 ? 1 : 0,
+            current_image: this.props.object_data.data.PROPERTIES.hasOwnProperty('MORE_PHOTO') && this.props.object_data.data.PROPERTIES.MORE_PHOTO.VALUE.length > 0 ? 1 : 0,
             galleryModal: false
         })
 
@@ -2411,14 +2464,17 @@ export default class App extends React.Component {
 
                 let language = item ? JSON.parse(item) : {};
                 let set_language = ru;
+                let language_name = 'ru';
 
                 if (language.hasOwnProperty('language')) {
                     set_language = language.language == 'ru' ? ru : language.language == 'bel' ?  bel : en;
+                    language_name = language.language;
                 }
 
 
                 this.setState({
                     language:set_language,
+                    language_name: language_name
                 })
 
             })
@@ -2663,6 +2719,36 @@ export default class App extends React.Component {
     }
 
 
+
+     declination(number) {
+        let names = ['отзыв', 'отзыва', 'отзывов'];
+        if(this.state.language_name == 'ru') {
+            names = ['отзыв', 'отзыва', 'отзывов'];
+        } else if(this.state.language_name == 'bel') {
+            names = ['водгук', 'водгуку', 'водгукаў'];
+        } else if(this.state.language_name == 'en') {
+            names = ['review', 'review', 'review'];
+        }
+
+        // return number+" "+names[(number%100>4 && number%100)]
+
+
+         let n = Math.abs(number);
+         n %= 100;
+         if (n >= 5 && n <= 20) {
+             return names[2];
+         }
+         n %= 10;
+         if (n === 1) {
+             return names[0];
+         }
+         if (n >= 2 && n <= 4) {
+             return names[1];
+         }
+         return names[2];
+    }
+
+
     prevSlide = () =>
     {
         let active_slider_index = this.state.current_slide_index_for_slider;
@@ -2698,6 +2784,26 @@ export default class App extends React.Component {
         })
     }
 
+
+    printRateText = () => {
+
+        let {obj_vote, language} = this.state;
+        let result_text = '';
+
+        if(obj_vote > 0 && obj_vote <= 1.4) {
+            result_text = language.badly;
+        } else if(obj_vote >= 1.5 && obj_vote <= 2.4) {
+            result_text = language.below_the_average;
+        } else if(obj_vote >= 2.5 && obj_vote <= 3.4) {
+            result_text = language.medium;
+        } else if(obj_vote >= 3.5 && obj_vote <= 4.5) {
+            result_text = language.above_average;
+        } else if(obj_vote >= 4.6 && obj_vote <= 5) {
+            result_text = language.fine;
+        }
+
+        return result_text;
+    }
 
 
     render() {
@@ -2808,8 +2914,6 @@ export default class App extends React.Component {
                 </SafeAreaView>
             )
         }
-
-
 
         {/*Gallery modal END*/}
 
@@ -3742,7 +3846,7 @@ export default class App extends React.Component {
 
                             {/*PHONES START*/}
 
-                            {this.props.object_data.data.PROPERTIES.PHONE.VALUE.length > 0 &&
+                            {this.props.object_data.data.PROPERTIES.PHONE.VALUE.length > 0 && this.props.object_data.data.PROPERTIES.PHONE.VALUE[0] !== null &&
 
                                 <View style={{width:'100%', flexDirection:'row', alignItems:'flex-start', marginBottom: 8}}>
                                     <View style={{marginRight:8}}>
@@ -3810,7 +3914,7 @@ export default class App extends React.Component {
 
                             {/*FAX START*/}
 
-                            {this.props.object_data.data.PROPERTIES.FAX.VALUE &&
+                            {this.props.object_data.data.PROPERTIES.FAX.VALUE !== null &&
 
                                 <View style={{flex:1, flexDirection:'row', marginBottom:16 }}>
                                     <Svg  width={19}  height={18}  viewBox="0 0 19 18"  fill="none"  xmlns="http://www.w3.org/2000/svg"  >
@@ -3844,7 +3948,7 @@ export default class App extends React.Component {
 
 
                             {/*Mail START*/}
-                            {this.props.object_data.data.PROPERTIES.MAIL.VALUE.length > 0 &&
+                            {this.props.object_data.data.PROPERTIES.MAIL.VALUE.length > 0 && this.props.object_data.data.PROPERTIES.MAIL.VALUE[0] !== null &&
                               <View style={{width:'100%', flexDirection:'row', alignItems:'flex-start', marginBottom: 17}}>
                                 <View style={{marginRight:8}}>
                                     <Svg width={18} height={18} viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3884,8 +3988,10 @@ export default class App extends React.Component {
 
                             {/*TIME START*/}
 
-                            {this.props.object_data.data.PROPERTIES.hasOwnProperty('TIME') && this.props.object_data.data.PROPERTIES.TIME.VALUE.length > 0 &&
+                            {this.props.object_data.data.PROPERTIES.hasOwnProperty('TIME') && this.props.object_data.data.PROPERTIES.TIME.VALUE.length > 0 && this.props.object_data.data.PROPERTIES.TIME.VALUE[0].NAME !== null &&
+
                                 <View style={{width:'100%', flexDirection:'row', alignItems:'flex-start', marginBottom: 17}}>
+
                                     <View style={{marginRight:8}}>
                                         <Svg  width={18}  height={18}  viewBox="0 0 18 18"  fill="none"  xmlns="http://www.w3.org/2000/svg">
                                             <Path  fillRule="evenodd"  clipRule="evenodd"  d="M5.783.514a.5.5 0 00-1 0v2.072H2.515a2.5 2.5 0 00-2.5 2.5v10.4a2.5 2.5 0 002.5 2.5H15.47a2.5 2.5 0 002.5-2.5v-10.4a2.5 2.5 0 00-2.5-2.5h-2.268V.514a.5.5 0 10-1 0v2.072H5.783V.514zm6.919 3.072H2.515a1.5 1.5 0 00-1.5 1.5v.071H16.97v-.071a1.5 1.5 0 00-1.5-1.5h-2.768zm4.268 2.571H1.015v9.329a1.5 1.5 0 001.5 1.5H15.47a1.5 1.5 0 001.5-1.5V6.157zM9.493 8.743a.5.5 0 00-1 0v3.086a.5.5 0 00.151.358l1.59 1.543a.5.5 0 00.696-.717l-1.437-1.396V8.743z"  fill="#9F9EAE" />
@@ -3897,6 +4003,7 @@ export default class App extends React.Component {
                                         {this.props.object_data.data.PROPERTIES.hasOwnProperty('TIME') && this.props.object_data.data.PROPERTIES.TIME.VALUE.map((time, index) => {
 
                                             console.log(this.props.object_data.data.PROPERTIES.TIME, 'TIME')
+
                                             return (
                                                 <View key={time.VALUE} style={{flexDirection:'row', marginBottom:8, width:'100%' }}>
                                                     <Text style={{color:'#44434C', fontSize:14,  marginRight: 8, fontFamily:'FiraSans_400Regular'}}>{time.VALUE}</Text>
@@ -3924,50 +4031,50 @@ export default class App extends React.Component {
                             <View style={ styles.weekDaysWrapper}>
 
 
-                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset, this.state.MONDAY === false  ?  styles.weekDaysWrapperItemActive : {}]}>
-                                    <Text style={[styles.weekDaysWrapperItemText, this.state.MONDAY === false  ?  styles.weekDaysWrapperItemTextActive : {}]}>
+                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset, this.state.MONDAY === true  ?  styles.weekDaysWrapperItemActive : {}]}>
+                                    <Text style={[styles.weekDaysWrapperItemText, this.state.MONDAY === true  ?  styles.weekDaysWrapperItemTextActive : {}]}>
                                         ПН
                                     </Text>
                                 </View>
 
 
-                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset,this.state.TUESDAY === false  ?  styles.weekDaysWrapperItemActive : {}]}>
-                                    <Text style={[styles.weekDaysWrapperItemText,this.state.TUESDAY === false  ?  styles.weekDaysWrapperItemTextActive : {}]}>
+                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset,this.state.TUESDAY === true  ?  styles.weekDaysWrapperItemActive : {}]}>
+                                    <Text style={[styles.weekDaysWrapperItemText,this.state.TUESDAY === true  ?  styles.weekDaysWrapperItemTextActive : {}]}>
                                         ВТ
                                     </Text>
                                 </View>
 
 
-                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset,this.state.WEDNESDAY === false  ?  styles.weekDaysWrapperItemActive : {}]}>
-                                    <Text style={[styles.weekDaysWrapperItemText,this.state.WEDNESDAY === false  ?  styles.weekDaysWrapperItemTextActive : {}]}>
+                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset,this.state.WEDNESDAY === true  ?  styles.weekDaysWrapperItemActive : {}]}>
+                                    <Text style={[styles.weekDaysWrapperItemText,this.state.WEDNESDAY === true  ?  styles.weekDaysWrapperItemTextActive : {}]}>
                                         СР
                                     </Text>
                                 </View>
 
 
-                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset, this.state.THURSDAY === false  ?  styles.weekDaysWrapperItemActive : {}]}>
-                                    <Text style={[styles.weekDaysWrapperItemText, this.state.THURSDAY === false  ?  styles.weekDaysWrapperItemTextActive : {}]}>
+                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset, this.state.THURSDAY === true  ?  styles.weekDaysWrapperItemActive : {}]}>
+                                    <Text style={[styles.weekDaysWrapperItemText, this.state.THURSDAY === true  ?  styles.weekDaysWrapperItemTextActive : {}]}>
                                         ЧТ
                                     </Text>
                                 </View>
 
 
-                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset, this.state.FRIDAY === false  ?  styles.weekDaysWrapperItemActive : {}]}>
-                                    <Text style={[styles.weekDaysWrapperItemText, this.state.FRIDAY === false  ?  styles.weekDaysWrapperItemTextActive : {}]}>
+                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset, this.state.FRIDAY === true  ?  styles.weekDaysWrapperItemActive : {}]}>
+                                    <Text style={[styles.weekDaysWrapperItemText, this.state.FRIDAY === true  ?  styles.weekDaysWrapperItemTextActive : {}]}>
                                         ПТ
                                     </Text>
                                 </View>
 
 
-                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset, this.state.SATURDAY === false  ?  styles.weekDaysWrapperItemActive : {}]}>
-                                    <Text style={[styles.weekDaysWrapperItemText, this.state.SATURDAY === false  ?  styles.weekDaysWrapperItemTextActive : {}]}>
+                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, styles.borderRightUnset, this.state.SATURDAY === true  ?  styles.weekDaysWrapperItemActive : {}]}>
+                                    <Text style={[styles.weekDaysWrapperItemText, this.state.SATURDAY === true  ?  styles.weekDaysWrapperItemTextActive : {}]}>
                                         СБ
                                     </Text>
                                 </View>
 
 
-                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, this.state.SUNDAY === false  ?  styles.weekDaysWrapperItemActive : {}]}>
-                                    <Text style={[styles.weekDaysWrapperItemText, this.state.SUNDAY === false  ?  styles.weekDaysWrapperItemTextActive : {}]}>
+                                <View style={[{fontFamily:'Ubuntu_400Regular'},styles.weekDaysWrapperItem, this.state.SUNDAY === true  ?  styles.weekDaysWrapperItemActive : {}]}>
+                                    <Text style={[styles.weekDaysWrapperItemText, this.state.SUNDAY === true  ?  styles.weekDaysWrapperItemTextActive : {}]}>
                                         ВС
                                     </Text>
                                 </View>
@@ -5156,79 +5263,51 @@ export default class App extends React.Component {
 
                         <View style={[{width:'100%',  paddingVertical: 16}, !this.state.restorane_menu ? {display:'none'} : {}]}>
 
-
                             {this.state.menu_data.map((menu_item, index) => {
 
                                 return (
-
                                     <View key={index} style={styles.menuItemWrapper}>
-
                                         <TouchableOpacity
                                             style={styles.menuItem}
                                             onPress={() => {this.toggleMenu(menu_item)}}
                                         >
                                             <Text style={[styles.menuItemText, {fontFamily:'Ubuntu_400Regular'}]}>
-
                                                 {menu_item.menu_item_name}
-
                                             </Text>
 
-
-
                                             {menu_item.isOpen ?
-
                                                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none"
                                                      xmlns="http://www.w3.org/2000/svg">
                                                     <Path d="M19 15l-7-7-7 7" stroke="#C29A0A" strokeLinecap="round"
                                                           strokeLinejoin="round"/>
                                                 </Svg>
-
                                                 :
-
                                                 <Svg style={styles.menuItemSvg}  width={24}  height={24}  viewBox="0 0 24 24"  fill="none"  xmlns="http://www.w3.org/2000/svg">
                                                     <Path   d="M5 9l7 7 7-7"   stroke="#C29A0A"   strokeLinecap="round"   strokeLinejoin="round"/>
                                                 </Svg>
-
                                             }
-
                                         </TouchableOpacity>
 
-
-
                                         {menu_item.isOpen && menu_item.menu_item_arr.map((item, index2) => {
-
                                             return (
-
                                                 <View key={index2} style={styles.menuItemMoreWrapper}>
-
                                                     <TouchableOpacity style={styles.menuItemMoreWrapperItem}>
-
                                                         <View style={styles.menuItemMoreWrapperItemLeft}>
-
                                                             <Text style={{fontSize: 16, color:'#1D1D20', fontFamily:'Ubuntu_400Regular'}}>{item.NAME}</Text>
                                                             <Text style={{color:'#54535F', fontSize: 12, fontFamily:'FiraSans_400Regular'}}>{item.WEIGHT} {this.state.language.g}</Text>
-
                                                         </View>
 
                                                         <Text style={[styles.menuItemMoreWrapperItemRightText, {fontFamily:'Ubuntu_400Regular'}]}>
                                                             {item.PRICE}
                                                         </Text>
-
                                                     </TouchableOpacity>
-
                                                 </View>
                                             )
-
                                         })}
 
-
                                     </View>
-
                                 )
-
                             })}
-
-
                         </View>
 
                     {/*Restoran MENU  TAB END*/}
@@ -5238,10 +5317,124 @@ export default class App extends React.Component {
 
                     {/*Reviews TAB START*/}
 
-                        <View style={[{width:'100%',  paddingVertical: 16}, !this.state.reviews_tab ? {display:'none'} : {}]}>
+                        <View style={[{width:'100%',  paddingBottom: 16}, !this.state.reviews_tab ? {display:'none'} : {}]}>
+
+                            {/*Rate yellow top block START*/}
+
+                                <View
+                                    style={{
+                                        width: '100%',
+                                        height: 72,
+                                        backgroundColor:'#FDF5D8',
+                                        marginBottom: 26,
+                                        paddingVertical: 17,
+                                        paddingHorizontal:16,
+                                        flexDirection:'row',
+                                        justifyContent:'space-between'
+                                    }}
+                                >
+                                    <View style={{flexDirection:'row'}}>
+
+                                        <View
+                                            style={{
+                                                width:40,
+                                                height:40,
+                                                flexDirection:'row',
+                                                alignItems:'center',
+                                                justifyContent:'center'
+                                            }}
+                                        >
+                                            <StarSvg
+                                                style={{
+                                                    position:'absolute',
+                                                    top:0,
+                                                    left: 0
+                                                }}
+                                            />
+
+                                            {this.state.obj_vote > 0 &&
+                                                <Text style={{color:'#C29A0A', fontSize: 20 }}>
+                                                    {this.state.obj_vote}
+                                                </Text>
+                                            }
+
+                                        </View>
+
+                                        {this.state.obj_vote > 0 ?
+                                            <View style={{paddingLeft:16}}>
+                                                <Text
+                                                    style={{
+                                                        color: '#3A2E03',
+                                                        fontSize: 14,
+                                                        fontWeight:'500',
+                                                        marginBottom:7
+                                                    }}
+                                                >
+                                                    {this.printRateText()}
+                                                </Text>
+                                                <Text
+                                                    style={{
+                                                        color: '#393840',
+                                                        fontSize: 12,
+                                                        fontWeight:'400',
+                                                        fontFamily:'FiraSans_400Regular'
+                                                    }}
+                                                >
+                                                    {/*Оставлено {this.state.reviews_data.length} отзыва*/}
+                                                    {this.state.language.left} {this.state.reviews_data.length} {this.declination(this.state.reviews_data.length)}
+                                                </Text>
+                                            </View>
+                                            :
+                                            <View style={{paddingLeft:16, alignItems:'center', justifyContent:'center', backgroundColor:'transparent'}}>
+                                                <Text
+                                                    style={{
+                                                        color: '#3A2E03',
+                                                        fontSize: 14,
+                                                        fontWeight:'500',
+                                                    }}
+                                                >
+                                                    {/*Никто не оценил*/}
+                                                    {this.state.language.no_one_appreciated}
+                                                </Text>
+
+                                            </View>
+                                        }
+
+
+                                    </View>
+
+                                    { this.state.obj_vote > 0 &&
+                                        <View style={{flex:1, flexDirection:'row', justifyContent:'flex-end', alignItems:'center'}}>
+                                            <View
+                                                style={{
+                                                    paddingVertical:4,
+                                                    paddingHorizontal:8,
+                                                    backgroundColor:'white',
+                                                    borderRadius: 20
+                                                }}
+                                            >
+                                                <Text
+                                                    style={{
+                                                        fontSize: 10,
+                                                        fontWeight:'bold',
+                                                        color: '#3A2E03',
+                                                        fontFamily:'FiraSans_400Regular'
+                                                    }}
+                                                >
+                                                    {/*ВАША ОЦЕНКА */}
+                                                    {this.state.language.your_mark} {this.state.user_vote}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    }
+
+
+                                </View>
+
+                            {/*Rate yellow top block END*/}
 
                             {this.state.reviews_data.length === 0 &&
-                                <Text style={{width: '100%', textAlign:'center',marginTop: 20, marginBottom: 20, fontFamily:'FiraSans_400Regular'}}>
+                                <Text style={{width: '100%', textAlign:'center',marginTop: 0, marginBottom: 24, fontFamily:'FiraSans_400Regular'}}>
                                     {/*Нет отзывов!*/}
                                     {this.state.language.no_reviews}
                                 </Text>
@@ -5260,27 +5453,16 @@ export default class App extends React.Component {
                                                 <View style={{width: '100%',  justifyContent:'space-between', marginBottom:14, alignItems:'flex-start', flexDirection:'row'}}>
 
                                                     <View>
-                                                        <Text style={{color: '#1D1D20', fontSize: 16, fontFamily:'Ubuntu_400Regular'}}>Логин: {review_item.login}</Text>
+                                                        <Text style={{color: '#1D1D20', fontSize: 16, fontFamily:'Ubuntu_400Regular'}}>{this.state.language.login_tr}: {review_item.login}</Text>
                                                         <Text style={{color: '#54535F', fontSize: 12, fontFamily:'FiraSans_400Regular'}}>{review_item.date}</Text>
                                                     </View>
 
-
                                                    <View style={{flexDirection:'row', alignItems:'flex-start', position:'relative', left:-2, marginTop: 10}}>
-                                                       {/*<StarRating*/}
-                                                       {/*    disabled={true}*/}
-                                                       {/*    maxStars={5}*/}
-                                                       {/*    rating={parseInt(review_item.stars)}*/}
-                                                       {/*    selectedStar={(rating) => this.onStarRatingPress(rating)}*/}
-                                                       {/*    fullStarColor={'#C29A0A'}*/}
-                                                       {/*    emptyStarColor={'#C29A0A'}*/}
-                                                       {/*    starSize={20}*/}
-                                                       {/*    containerStyle={{maxWidth: 250, alignSelf:'center'}}*/}
-                                                       {/*    buttonStyle={{marginHorizontal:4}}*/}
-                                                       {/*/>*/}
 
-                                                       {this.printNotChangedStars(review_item.stars)}
+                                                       {/*{this.printNotChangedStars(review_item.stars)}*/}
+                                                       <StarSvg/>
 
-                                                       <Text style={{color:'#C29A0A', fontSize: 10, position:'relative', top:5,marginLeft: 8, }}>{review_item.stars}.0</Text>
+                                                       <Text style={{color:'#C29A0A', fontSize: 20, position:'absolute', top:7,left: 6, }}>{review_item.stars}.0</Text>
                                                    </View>
 
                                                 </View>
@@ -5322,8 +5504,22 @@ export default class App extends React.Component {
                             <View style={styles.sendReviewWrapper}>
 
 
+                                {/*Поставьте оценку START*/}
+                                <Text style={{fontSize: 14, color:'#1D1D20', textAlign:'center', marginBottom: 14, fontFamily:'FiraSans_400Regular'}}>
+                                    {this.state.language.make_a_review}
+                                </Text>
+                                <View style={styles.childView}>{React_Native_Rating_Bar}</View>
+                                {/*Поставьте оценку END*/}
+
+
+                                <View style={{width: '100%', height:1, backgroundColor:'#FAE69E', marginBottom: 21}}></View>
+
 
                                 <View style={{width: '100%',  borderRadius: 8, overflow: 'hidden', marginBottom: 5}}>
+
+                                    <Text style={{fontSize: 14, color:'#1D1D20', textAlign:'center', marginBottom: 14, fontFamily:'FiraSans_400Regular'}}>
+                                        {this.state.language.write_feadback}
+                                    </Text>
 
                                     <TextInput
                                         multiline
@@ -5357,27 +5553,6 @@ export default class App extends React.Component {
 
                                 </View>
 
-
-                                <View style={{width: '100%', height:1, backgroundColor:'#FAE69E', marginBottom: 21}}></View>
-
-                                <Text style={{fontSize: 14, color:'#1D1D20', textAlign:'center', marginBottom: 14, fontFamily:'FiraSans_400Regular'}}>
-                                    {this.state.language.make_a_review}
-                                </Text>
-
-
-                                {/*<StarRating*/}
-                                {/*    disabled={false}*/}
-                                {/*    maxStars={5}*/}
-                                {/*    rating={this.state.starCount}*/}
-                                {/*    selectedStar={(rating) => this.onStarRatingPress(rating)}*/}
-                                {/*    fullStarColor={'#C29A0A'}*/}
-                                {/*    emptyStarColor={'#C29A0A'}*/}
-                                {/*    starSize={30}*/}
-                                {/*    containerStyle={{maxWidth: 250, alignSelf:'center', marginBottom: 24}}*/}
-                                {/*    buttonStyle={{marginHorizontal:4}}*/}
-                                {/*/>*/}
-
-                                <View style={styles.childView}>{React_Native_Rating_Bar}</View>
 
 
                                 <TouchableOpacity style={styles.book_now} onPress={() => {this.sendReviewHandler()}}>

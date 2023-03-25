@@ -17,13 +17,16 @@ import {
     NativeModules,
     Platform,
     Keyboard,
-    LogBox
+    LogBox,
+    TouchableWithoutFeedback
 } from 'react-native';
 
 const { StatusBarManager } = NativeModules;
 
 LogBox.ignoreLogs(['Animated: `useNativeDriver`']);
 import MaskInput from 'react-native-mask-input';
+// import CryptoJS from 'crypto-js';
+import CryptoES from "crypto-es";
 
 // react-native-text-input-mask
 
@@ -36,7 +39,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Svg, { Path, Defs, G, ClipPath, Rect, Circle } from "react-native-svg"
 
 import i18n from 'i18n-js';
-import { de, en, fr } from '../../i18n/supportedLanguages';
+import {bel, de, en, fr, ru} from '../../i18n/supportedLanguages';
 // import DropDownPicker from "react-native-custom-dropdown";
 
 import {
@@ -46,6 +49,7 @@ import {
     useSafeAreaInsets,
     initialWindowMetrics,
 } from 'react-native-safe-area-context';
+import CryptoJS from "crypto-js";
 
 
 i18n.fallbacks = true;
@@ -131,7 +135,11 @@ export default class App extends Component {
             STATUSBAR_HEIGHT: 40,
 
             bottom_right_svg: new Animated.Value(0),
-            keyboardOpen: false
+            keyboardOpen: false,
+
+            show_politic_modal: false,
+            show_politic_text_modal: false,
+            politic_text: ''
         };
 
     }
@@ -168,7 +176,7 @@ export default class App extends Component {
             this.setState({
                 reg_password_error: true,
                 reg_password_valid: false,
-                reg_password_error_text: 'Пароль введен неверно!'
+                reg_password_error_text: this.state.language.reg_password_error_text  //'Пароль введен неверно!'
             })
 
         }
@@ -204,7 +212,7 @@ export default class App extends Component {
             this.setState({
                 reg_confirm_password_error: true,
                 reg_confirm_password_valid: false,
-                reg_confirm_password_error_text: 'Пароль введен неверно!'
+                reg_confirm_password_error_text: this.state.language.reg_password_error_text //'Пароль введен неверно!'
             })
 
         }
@@ -348,22 +356,22 @@ export default class App extends Component {
         };
 
 
-        if (!registerPolicy) {
-            this.setState({
-                registerPolicyError: true
-            })
-            return false;
-
-        } else {
-            this.setState({
-                registerPolicyError: false
-            })
-        }
+        // if (!registerPolicy) {
+        //     this.setState({
+        //         registerPolicyError: true
+        //     })
+        //     return false;
+        //
+        // } else {
+        //     this.setState({
+        //         registerPolicyError: false
+        //     })
+        // }
 
         axios.post('https://qr-gid.by/api/auth/register/', req).then(
            async (response)  => {
 
-                console.log(response, 'register response')
+                console.log(response.data, 'register response')
 
                 if(response.data.TYPE == "OK") {
 
@@ -393,19 +401,33 @@ export default class App extends Component {
 
                     if(response.data.MESSAGE.hasOwnProperty('email')) {
 
+                        let error = '';
+
+                        if(response.data.MESSAGE.email == 'Введите почту') {
+                            error = this.state.language.reg_email_error_text1
+                        } else if(response.data.MESSAGE.email == 'Почта введена не верно') {
+                            error = this.state.language.reg_email_error_text2
+                        }
+
                         this.setState({
                             reg_email_error: true,
                             reg_email_valid: false,
-                            reg_email_error_text: response.data.MESSAGE.email
+                            reg_email_error_text: error
                         })
 
                     }
                     if(response.data.MESSAGE.hasOwnProperty('phone')) {
 
+                        let error = '';
+
+                        if(response.data.MESSAGE.phone == 'Введите номер телефона') {
+                            error = this.state.language.reg_phone_error_text1
+                        }
+
                         this.setState({
                             reg_phone_error: true,
                             reg_phone_valid:false,
-                            reg_phone_error_text: response.data.MESSAGE.phone
+                            reg_phone_error_text: error
                         })
 
                     }
@@ -422,18 +444,33 @@ export default class App extends Component {
 
                     if(response.data.MESSAGE.hasOwnProperty('pass')) {
 
+                        let error = '';
+
+                        if(response.data.MESSAGE.pass == 'Введите пароль') {
+                            error = this.state.language.reg_password_error_text1
+                        } else if(response.data.MESSAGE.pass == 'Пароль должно быть не менее 6 символов') {
+                            error = this.state.language.reg_password_error_text2
+                        }
+
                         this.setState({
                             reg_password_error: true,
-                            reg_password_error_text: response.data.MESSAGE.pass
+                            reg_password_error_text: error
                         })
 
                     }
 
                     if(response.data.MESSAGE.hasOwnProperty('passConfirm')) {
 
+                        let error = '';
+
+                        if(response.data.MESSAGE.passConfirm == 'Пароли должны совпадать') {
+                            error = this.state.language.reg_confirm_password_error_text
+                        }
+
+
                         this.setState({
                             reg_confirm_password_error: true,
-                            reg_confirm_password_error_text: response.data.MESSAGE.passConfirm
+                            reg_confirm_password_error_text: error
                         })
 
                     }
@@ -530,10 +567,147 @@ export default class App extends Component {
     }
 
 
-    componentDidMount() {
-        const { navigation } = this.props;
+    getPolitic = async () =>
+    {
+        let {language_name} =  this.state;
 
+        let url = '';
+        if (language_name == 'ru') {
+            url = 'https://qr-gid.by/api/policy/';
+        } else if (language_name == 'bel') {
+            url = 'https://qr-gid.by/api/by/policy/';
+        } else if (language_name == 'en') {
+            url = 'https://qr-gid.by/api/en/policy/';
+        }
+        fetch(
+            url,
+            {
+                method: "GET",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+            }
+        ).then((response) => response.json())
+            .catch((error) => {
+                console.log("ERROR " , error)
+            })
+            .then(async (responseData) => {
+                console.log(responseData, 'responseData')
+                console.log(url, 'url')
+                await this.setState({
+                    politic_text: responseData
+                })
+            })
+    }
+
+
+    setLanguageFromStorage = async ()=>
+    {
+        await AsyncStorage.getItem('language',async (err,item) =>
+        {
+            let language = item ? JSON.parse(item) : {};
+            if (language.hasOwnProperty('language')) {
+                i18n.locale = language.language;
+                await this.setState({
+                    language: language.language == 'ru' ? ru : language.language == 'bel' ?  bel : en,
+                    language_name: language.language == 'ru' ? 'ru' : language.language == 'bel' ?  'bel' : 'en'
+                })
+            } else {
+                i18n.locale = 'ru';
+                await this.setState({
+                    language: ru
+                })
+            }
+        })
+    }
+
+
+    loadFunction = async () =>
+    {
+        await this.setLanguageFromStorage();
+        await this.getPolitic();
+    }
+
+
+    decrypte () {
+
+        let CryptoJS = require("crypto-js");
+
+        let data = {"ciphertext":"q1aXE+ZoT2bYJJZF6RQMmjyDf0yzju4e9SRuXC4M7HM=","iv":"01cab2f8813181204cd444f20e9e5598","salt":"07c6712b27fd1323b1d76733783e3c0608d14c5a7ce86966b6e84a27ca0838ea4b20f78f6f30803bf0a4e643a33c3ea4d45deb78fe6874607cfe68d7b0aa4e745af8d02b5d13f1d657e1346237dea9117f44509aa012323bdd6a7267a7c8a470cb82b175394fb3ba8fdb1c88cd6954f49a6faa8c3b785d42abc7866eb18e463b04f311d93caf0114c4158f9316278fd0fa8b1032434d598d9222b8533fecdf1383048a8e32e21962abab2654e2987ac32ad89b8f1c9d098a29f8d6b95466e5881c5d5f9d4bad6de35585432b37cd7548415a20544f2013a66fc1c87b263827f0bafe3d298c1139326fb85fdf870aa9329d5dee96e2c7a4d44a3d205522eb9f83"}
+        let passphrase_ = 'test';
+        var salt = CryptoJS.enc.Hex.parse(data.salt);
+        var iv = CryptoJS.enc.Hex.parse(data.iv);
+        var key = CryptoJS.PBKDF2(passphrase_, salt, { hasher: CryptoJS.algo.SHA512, keySize: 64/8, iterations: 999});
+
+        var decrypted = CryptoJS.AES.decrypt(data.ciphertext, key, { iv: iv});
+        let decrypt =  decrypted.toString(CryptoJS.enc.Utf8);
+
+        console.log(decrypt, 'decrypt')
+    }
+
+    encrypt(string, key){
+        var CryptoJS = require("crypto-js");
+
+        var plaintext = string;
+        var keyMaterial = key;
+        var ivMaterial = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]
+
+        var truncHexKey = CryptoJS.SHA256(keyMaterial).toString().substr(0, 32); // hex encode and truncate
+        var truncHexIV = CryptoJS.SHA256(ivMaterial).toString().substr(0, 16); // hex encode and truncate
+        var key = CryptoJS.enc.Utf8.parse(truncHexKey);
+        var iv = CryptoJS.enc.Utf8.parse(truncHexIV);
+        var ciphertext = CryptoJS.AES.encrypt(plaintext, key, {iv: iv}); // default values: CBC, PKCS#7 padding
+
+        console.log('Ciphertext: ' + ciphertext.toString());
+    }
+
+    componentDidMount() {
+
+        // this.decrypte()
+        // this.encrypt('My text from react native', '12345')
+
+        // var mytexttoEncryption = "Hello";
+        // const encrypted = CryptoES.AES.encrypt(mytexttoEncryption ,"test").toString();
+        // console.log(encrypted, 'encrypted')
+        // var CryptoJS = require("crypto-js");
+        //
+        //
+        //
+        // const crypto = require('crypto-js');
+        //
+        // const result = '...'; // the encrypted data
+        // const key = '...'; // the encryption key
+        // // const iv = Buffer.alloc(16, 0); // assuming the IV is all zeroes
+        //
+        // const decipher = crypto.createDecipheriv('aes-192-cbc', key);
+        // let decrypted = decipher.update(result, 'hex', 'utf8');
+        // decrypted += decipher.final('utf8');
+        // console.log(decrypted, 'decrypted');
+
+        // var decrypted = CryptoJS.AES.decrypt(
+        //     '4DtAO3eWoZb5Am6CDI0jtKv/fRkFPXuCnLVdiKTvdYtW0gIJv/JR9G+uVNvG+a1GMhe+Mzl9VJqhtChyqQklOo5o+rqxLpY10MArldVBdqlRsGa3Pjckhhl8TRpeMBB6BXajgAMJWZFcu+SEMBtrV/1MOx6i/Jk9qmb1T4TZ5mAfpX2+1mHkrJdMCJMrgTqOFsgG2zlv6FxvbQIjrIRxLw==',
+        //    'test'
+        // ).toString(CryptoJS.enc.Utf8);
+        //
+        // console.log(decrypted, 'decrypted')
+
+
+        //
+        // var decrypted = CryptoJS.AES.decrypt(
+        //     '4DtAO3eWoZb5Am6CDI0jtKv/fRkFPXuCnLVdiKTvdYtW0gIJv/JR9G+uVNvG+a1GMhe+Mzl9VJqhtChyqQklOo5o+rqxLpY10MArldVBdqlRsGa3Pjckhhl8TRpeMBB6BXajgAMJWZFcu+SEMBtrV/1MOx6i/Jk9qmb1T4TZ5mAfpX2+1mHkrJdMCJMrgTqOFsgG2zlv6FxvbQIjrIRxLw==',
+        //    '12345'
+        // ).toString(CryptoJS.enc.Utf8);
+        //
+        // console.log(decrypted, 'decrypted')
+        //
+
+
+
+        const { navigation } = this.props;
         this.focusListener = navigation.addListener("focus", () => {
+
+            this.loadFunction();
 
             if ( Platform.OS === 'ios') {
 
@@ -542,16 +716,18 @@ export default class App extends Component {
                         STATUSBAR_HEIGHT: statusBarHeight.height
                     })
                 })
+
             } else {
+
                 this.setState({
                     STATUSBAR_HEIGHT: StatusBarManager.HEIGHT
-                })
+                });
+
             }
 
             this.getLocalEmailAndPassword();
 
         });
-
 
         this.keyboardDidShowListener = Keyboard.addListener(
             'keyboardDidShow',
@@ -564,12 +740,10 @@ export default class App extends Component {
 
     }
 
-
     componentWillUnmount() {
         this.keyboardDidShowListener.remove();
         this.keyboardDidHideListener.remove();
     }
-
 
     getLocalEmailAndPassword = async () =>
     {
@@ -581,51 +755,54 @@ export default class App extends Component {
             password: user_password ? user_password : ''
         })
 
-        console.log(user_email, 'user_email getLocalEmailAndPassword')
-        console.log(user_password, 'user_password getLocalEmailAndPassword')
+        // console.log(user_email, 'user_email getLocalEmailAndPassword')
+        // console.log(user_password, 'user_password getLocalEmailAndPassword')
     }
 
-    _keyboardDidShow =(event) => {
+    _keyboardDidShow =(event) =>
+    {
         this.setState({
             keyboardOpen:true
         })
     }
 
-    _keyboardDidHide = (event) => {
+    _keyboardDidHide = (event) =>
+    {
         this.setState({
             keyboardOpen:false
         })
     }
 
-    goToDashboard = () => {
-        Keyboard.dismiss()
+    goToDashboard = () =>
+    {
+        Keyboard.dismiss();
         this.setState({
             isOpenRegisterModal: false
-        })
-        this.props.navigation.navigate('Dashboard')
+        });
+        this.props.navigation.navigate('Dashboard');
     }
 
 
 
-    changeRegisterPhone = (reg_phone_masked, reg_phone) =>
+    changeRegisterPhone = ( reg_phone) =>
     {
+        reg_phone = reg_phone.replace('+','')
         reg_phone = '+'+reg_phone;
 
         this.setState({
-            reg_phone_masked: reg_phone_masked,
+            reg_phone_masked: '',
             reg_phone: reg_phone,
         });
 
         // var phonereg = /[+]375[0-9]{9}/;
         var phonereg = /[+]/;
 
-
-        if(reg_phone == '') {
+        if(reg_phone == '')
+        {
             this.setState({
                 reg_phone_error:false,
                 reg_phone_valid:false,
                 reg_phone_error_text: ''
-
             })
         } else {
             if (reg_phone.match(phonereg) && reg_phone.length > 6) {
@@ -992,19 +1169,37 @@ export default class App extends Component {
 
                     if(response.data.MESSAGE.hasOwnProperty('email')) {
 
+                        let error = '';
+                        if(response.data.MESSAGE.email == 'Введите почту') {
+                            error = this.state.language.reg_email_error_text1;
+                        }  else if(response.data.MESSAGE.email == 'Почта введена не верно') {
+                            error = this.state.language.reg_email_error_text2;
+                        } else if(response.data.MESSAGE.email == 'Должно быть заполнено только одно поле') {
+                            error = this.state.language.reg_email_error_text3;
+                        }
+
                         this.setState({
                             reset_pass_email_error: true,
                             reset_pass_email_valid: false,
-                            reset_pass_email_text: response.data.MESSAGE.email
+                            reset_pass_email_text: error
                         })
 
                     }
                     if(response.data.MESSAGE.hasOwnProperty('phone')) {
 
+                        let error = '';
+                        if(response.data.MESSAGE.phone == 'Введите номер телефона') {
+                            error = this.state.language.reg_phone_error_text1;
+                        } else if(response.data.MESSAGE.phone == 'Такой нормер телефона не существует') {
+                            error = this.state.language.reset_pass_phone_text2;
+                        } else if(response.data.MESSAGE.phone == 'Должно быть заполнено только одно поле') {
+                            error = this.state.language.reset_pass_phone_text3;
+                        }
+
                         this.setState({
                             reset_pass_phone_error: true,
                             reset_pass_phone_valid:false,
-                            reset_pass_phone_text: response.data.MESSAGE.phone
+                            reset_pass_phone_text: error
                         })
 
                     }
@@ -1115,7 +1310,8 @@ export default class App extends Component {
 
 
                     <Text style={styles.topPanelText}>
-                        Авторизация
+                        {/*Авторизация*/}
+                        {this.state.language.signin}
                     </Text>
 
                 </View>
@@ -1176,7 +1372,8 @@ export default class App extends Component {
                                             {color: this.state.login_error ? '#A4223C'  : this.state.login_valid ?  '#337363' : '#55545F' },
                                             {marginBottom:50, }
                                         ]}>
-                                        Логин или E-mail
+                                        {/*Логин или E-mail*/}
+                                        {this.state.language.login_or_email}
                                     </Text>
                                 }
                                 theme={{colors: {text: '#55545F', primary: 'transparent'}}}
@@ -1233,7 +1430,8 @@ export default class App extends Component {
                                 ]}
                                 label={
                                     <Text style={[{color: this.state.password_error ?  '#A4223C' : this.state.password_valid ? '#337363' :  '#55545F' }]}>
-                                        Пароль
+                                        {/*Пароль*/}
+                                        {this.state.language.password}
                                     </Text>
                                 }
                                 theme={{colors: {text: '#55545F', primary: 'transparent'}}}
@@ -1246,7 +1444,8 @@ export default class App extends Component {
                             {this.state.password_error &&
 
                                 <Text style={[styles.inp_buttom_label, {color:'#A4223C'}]}>
-                                   Не верный логин или пароль!
+                                   {/*Не верный логин или пароль!*/}
+                                    {this.state.language.wrong_login_or_password }
                                 </Text>
 
                             }
@@ -1258,7 +1457,11 @@ export default class App extends Component {
                                 style={styles.resetPassword}
                                 onPress={()=>{this.setState({isOpenResetPass: !this.state.isOpenResetPass})}}
                             >
-                                <Text style={styles.resetPasswordText}>ЗАБЫЛИ ПАРОЛЬ?</Text>
+                                <Text style={styles.resetPasswordText}>
+
+                                    {/*ЗАБЫЛИ ПАРОЛЬ?*/}
+                                    {this.state.language.forgot_your_password}
+                                </Text>
                             </TouchableOpacity>
 
                             <View  style={styles.loginButtonWrapper}>
@@ -1266,7 +1469,11 @@ export default class App extends Component {
                                     style={styles.loginButton}
                                     onPress={()=>this.loginHandle()}
                                 >
-                                    <Text style={styles.loginButtonText}>ВОЙТИ</Text>
+                                    <Text style={styles.loginButtonText}>
+                                        {/*ВОЙТИ*/}
+                                        {this.state.language.sign_in}
+
+                                    </Text>
                                 </TouchableOpacity>
                             </View>
 
@@ -1299,11 +1506,13 @@ export default class App extends Component {
                                         <View style={{width:208}}>
 
                                             <Text style={{color:'#1D1D20', fontSize: 24, marginBottom:5}}>
-                                                Забыли пароль?
+                                                {/*Забыли пароль?*/}
+                                                {this.state.language.forgot_your_password}?
                                             </Text>
 
                                             <Text style={{color:'#54535F', fontSize:14}}>
-                                                Введите e-mail или номер телефона, и мы вышлем вам временный пароль. Изменить его вы сможете самостоятельно в вашем профиле
+                                                {/*Введите e-mail или номер телефона, и мы вышлем вам временный пароль. Изменить его вы сможете самостоятельно в вашем профиле*/}
+                                                {this.state.language.forgot_your_password2}
                                             </Text>
 
                                         </View>
@@ -1371,7 +1580,8 @@ export default class App extends Component {
                                                         {color: this.state.reset_pass_phone_error ? '#A4223C' : this.state.reset_pass_phone_valid ? '#337363' : '#55545F'  },
                                                     ]}
                                                 >
-                                                    Телефон
+                                                    {/*Телефон*/}
+                                                    {this.state.language.phone}
                                                 </Text>
                                             }
                                             theme={{colors: {text: '#55545F', primary: 'transparent'}}}
@@ -1426,7 +1636,10 @@ export default class App extends Component {
 
 
 
-                                    <Text style={{marginVertical:8, width:'100%', textAlign:'center'}}>или</Text>
+                                    <Text style={{marginVertical:8, width:'100%', textAlign:'center'}}>
+                                        {/*или*/}
+                                        {this.state.language.or}
+                                    </Text>
 
 
                                     {/*RESET PASSWORD - EMAIL INPUT*/}
@@ -1522,7 +1735,8 @@ export default class App extends Component {
                                             onPress={()=> this.sendResetPasswordCode()}
                                         >
                                             <Text style={styles.register_button_text} >
-                                                ОТПРАВИТЬ
+                                                {/*ОТПРАВИТЬ*/}
+                                                {this.state.language.send}
                                             </Text>
                                         </TouchableOpacity>
                                     </View>
@@ -1560,7 +1774,8 @@ export default class App extends Component {
                                         <View style={{flex:1}}>
 
                                             <Text style={{color:'#54535F', fontSize:14}}>
-                                                Пароль успешно отправлен. Для повторной авторизации нажмите “Войти”
+                                                {/*Пароль успешно отправлен. Для повторной авторизации нажмите “Войти”*/}
+                                                {this.state.language.reset_password_success}
                                             </Text>
                                         </View>
 
@@ -1585,7 +1800,8 @@ export default class App extends Component {
                                     >
 
                                         <Text style={styles.register_button_text} >
-                                            ВОЙТИ
+                                            {/*ВОЙТИ*/}
+                                            {this.state.language.sign_in}
                                         </Text>
                                     </TouchableOpacity>
 
@@ -1600,6 +1816,285 @@ export default class App extends Component {
 
 
 
+                    {/*REGISTER POLITIC MODAL*/}
+
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={this.state.show_politic_modal}
+                    >
+
+                        { this.state.show_politic_text_modal &&
+
+                            <TouchableOpacity
+                                style={[styles.modalWrapper, {paddingHorizontal: 16, paddingVertical: 60 }]}
+                                onPress={()=>{
+                                    this.setState({
+                                        show_politic_text_modal: false,
+                                    })
+                                }}
+                            >
+
+                                <TouchableHighlight
+                                    style={[
+                                        styles.modalWrapperContent,
+                                        {  shadowColor: '#000',
+                                            shadowOffset: {
+                                                width: 0,
+                                                height: 1,
+                                            },
+                                            shadowOpacity: 0.22,
+                                            shadowRadius: 2.22,
+                                            elevation: 3,
+                                            width: '100%',
+                                            // maxWidth: 320
+                                            height: '100%'
+                                        }
+                                    ]}
+                                >
+                                    <View style={{width:'100%', height:'100%', justifyContent:'space-between'}}>
+
+                                        <View style={{ justifyContent:'space-between', alignItems:'flex-start',marginBottom:16,  flex:1, width: '100%'}}>
+
+                                            <Text style={{color: '#393840', fontSize:20, fontWeight:'500', marginBottom:18}}>
+                                                {/*Общие положения*/}
+                                                {this.state.language.general_provisions}
+
+                                            </Text>
+
+                                            <ScrollView style={{ width:'100%', marginBottom:24, zIndex:9999999}}>
+                                                <TouchableWithoutFeedback>
+                                                    <Text style={{color:'#54535F', fontSize:14}}>
+                                                        {this.state.politic_text}
+                                                        {/*Для улучшения работы приложения используются технологии сбора технических данных посетителей. Персональные данные пользователей хранятся и обрабатываются в соответствии с Политикой в отношении обработки персональных данных*/}
+                                                    </Text>
+                                                </TouchableWithoutFeedback>
+                                            </ScrollView>
+                                        </View>
+
+                                        <View style={{flexDirection:'row', width:'100%', alignItems:'center'}}>
+
+                                            <TouchableOpacity
+                                                style={{marginRight: 20}}
+                                                onPress={()=> {
+                                                    this.setState({
+                                                        show_politic_text_modal: false
+                                                    })
+                                                }}
+                                            >
+                                                <Text style={styles.register_button_text} >
+                                                    {/*ОТМЕНА*/}
+                                                    {this.state.language.cancel}
+                                                </Text>
+                                            </TouchableOpacity>
+
+                                            <TouchableOpacity
+                                                style={[styles.register_button, {height: 36, flex:1}]}
+                                                onPress={()=> {
+                                                    this.setState({
+                                                        show_politic_modal: false,
+                                                        show_politic_text_modal: false,
+                                                    })
+                                                }}
+                                            >
+
+                                                <Text style={styles.register_button_text} >
+                                                    {/*ПРИНЯТЬ И ПРОДОЛЖИТЬ*/}
+                                                    {this.state.language.accept_and_continue}
+
+                                                </Text>
+                                            </TouchableOpacity>
+                                        </View>
+
+                                    </View>
+                                </TouchableHighlight>
+
+                            </TouchableOpacity>
+
+                        }
+
+                        { !this.state.show_politic_text_modal &&
+
+                            <TouchableOpacity
+                                style={styles.modalWrapper}
+                                onPress={()=>{
+                                    this.setState({
+                                        // isOpenRegisterModal: false,
+                                        // show_politic_modal: false,
+                                    })
+                                }}
+                            >
+
+                                <TouchableHighlight
+                                    style={[
+                                        styles.modalWrapperContent,
+                                        {  shadowColor: '#000',
+                                            shadowOffset: {
+                                                width: 0,
+                                                height: 1,
+                                            },
+                                            shadowOpacity: 0.22,
+                                            shadowRadius: 2.22,
+                                            elevation: 3,
+                                            width: '100%',
+                                            maxWidth: 320
+                                        }
+                                    ]}
+                                >
+                                    <View style={{width:'100%'}}>
+
+                                        <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16}}>
+
+                                            <View style={{flex:1}}>
+
+                                                <Text style={{color:'#54535F', fontSize:14, marginBottom: 24}}>
+                                                    {/*Для улучшения работы приложения используются технологии сбора технических данных посетителей. Персональные данные пользователей хранятся и обрабатываются в соответствии с Политикой в отношении обработки персональных данных*/}
+
+                                                    {this.state.language.politic_popup_text }
+                                                </Text>
+
+                                                <TouchableOpacity
+                                                    onPress={()=>{
+                                                        this.setState({
+                                                            show_politic_text_modal: true,
+                                                        })
+                                                    }}
+                                                    style={{width: '100%', padding: 10, flexDirection:'row', alignItems:'center'}}
+                                                >
+
+                                                    <Svg style={{marginRight: 10}} width={18} height={18} viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <Path fillRule="evenodd" clipRule="evenodd" d="M14 2H4a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V3a1 1 0 00-1-1zM4 1a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2H4zm1 3a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7A.5.5 0 015 4zm.5 2a.5.5 0 000 1h7a.5.5 0 000-1h-7zM5 9a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3A.5.5 0 015 9zm5.9 3.3a.5.5 0 00-.8-.6l-1.154 1.539-.592-.593a.5.5 0 00-.708.708l1 1A.5.5 0 009.4 14.3l1.5-2z" fill="#55545F"/>
+                                                    </Svg>
+
+                                                    <Text style={{fontSize:12 , fontWeight:'bold'}}>
+                                                        {/*ОЗНАКОМИТЬСЯ С ПОЛИТИКОЙ*/}
+                                                        {this.state.language.read_the_policy}
+                                                    </Text>
+
+
+                                                </TouchableOpacity>
+                                            </View>
+
+
+                                            <TouchableOpacity
+                                                onPress={()=>{
+                                                    this.setState({
+                                                        isOpenRegisterModal: false,
+                                                        show_politic_modal: false,
+                                                    })
+                                                }}
+                                            >
+                                                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <Path
+                                                        d="M12 0C8.793 0 5.772 1.241 3.517 3.517 1.241 5.772 0 8.793 0 12c0 3.207 1.241 6.228 3.517 8.483A11.893 11.893 0 0012 24c3.207 0 6.228-1.241 8.483-3.517A11.893 11.893 0 0024 12c0-3.207-1.241-6.228-3.517-8.483C18.228 1.241 15.207 0 12 0zm0 1.241c2.876 0 5.566 1.117 7.614 3.145S22.759 9.124 22.759 12c0 2.876-1.117 5.566-3.145 7.614-2.048 2.027-4.738 3.145-7.614 3.145-2.876 0-5.566-1.117-7.614-3.145S1.241 14.876 1.241 12c0-2.876 1.117-5.566 3.145-7.614S9.124 1.241 12 1.241zM9.22 8.586a.575.575 0 00-.427.187.6.6 0 000 .868L11.131 12l-2.358 2.338a.6.6 0 000 .869c.124.124.29.186.434.186.145 0 .31-.062.434-.186L12 12.869l2.338 2.338c.124.124.29.186.435.186.144 0 .31-.062.434-.186a.6.6 0 000-.869L12.869 12l2.338-2.338a.644.644 0 00.02-.89.6.6 0 00-.868 0L12 11.133l-2.338-2.36a.625.625 0 00-.442-.186z"
+                                                        fill="#393840"
+                                                    />
+                                                </Svg>
+                                            </TouchableOpacity>
+
+                                        </View>
+
+
+                                        <TouchableOpacity
+                                            style={[styles.register_button, {height: 36}]}
+                                            onPress={()=> {
+                                                this.setState({
+                                                    show_politic_modal: false
+                                                })
+                                            }}
+                                        >
+
+                                            <Text style={styles.register_button_text} >
+                                                {/*Принять и продолжить*/}
+                                                {this.state.language.accept_and_continue}
+                                            </Text>
+                                        </TouchableOpacity>
+
+                                    </View>
+                                </TouchableHighlight>
+
+                            </TouchableOpacity>
+                        }
+
+
+
+                    </Modal>
+
+
+                    {/*REGISTER POLITIC TEXT MODAL*/}
+
+
+
+
+                    {/*<Modal*/}
+                    {/*    animationType="slide"*/}
+                    {/*    transparent={true}*/}
+                    {/*    visible={this.state.show_politic_text_modal}*/}
+                    {/*>*/}
+
+                    {/*    <TouchableOpacity*/}
+                    {/*        style={styles.modalWrapper}*/}
+                    {/*        onPress={()=>{*/}
+                    {/*            this.setState({*/}
+                    {/*                show_politic_text_modal: false,*/}
+                    {/*            })*/}
+                    {/*        }}*/}
+                    {/*    >*/}
+
+                    {/*        <TouchableHighlight*/}
+                    {/*            style={[*/}
+                    {/*                styles.modalWrapperContent,*/}
+                    {/*                {  shadowColor: '#000',*/}
+                    {/*                    shadowOffset: {*/}
+                    {/*                        width: 0,*/}
+                    {/*                        height: 1,*/}
+                    {/*                    },*/}
+                    {/*                    shadowOpacity: 0.22,*/}
+                    {/*                    shadowRadius: 2.22,*/}
+                    {/*                    elevation: 3,*/}
+                    {/*                    width: '100%',*/}
+                    {/*                    maxWidth: 320*/}
+                    {/*                }*/}
+                    {/*            ]}*/}
+                    {/*        >*/}
+                    {/*            <View style={{width:'100%'}}>*/}
+
+                    {/*                <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16}}>*/}
+
+                    {/*                    <View style={{flex:1}}>*/}
+
+                    {/*                        <Text style={{color:'#54535F', fontSize:14, marginBottom: 24}}>*/}
+                    {/*                            Для улучшения работы приложения используются технологии сбора технических данных посетителей. Персональные данные пользователей хранятся и обрабатываются в соответствии с Политикой в отношении обработки персональных данных*/}
+                    {/*                        </Text>*/}
+
+
+                    {/*                    </View>*/}
+
+
+                    {/*                    <TouchableOpacity*/}
+                    {/*                        onPress={()=>{*/}
+                    {/*                            this.setState({*/}
+                    {/*                                show_politic_text_modal: false,*/}
+                    {/*                            })*/}
+                    {/*                        }}*/}
+                    {/*                    >*/}
+                    {/*                        <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">*/}
+                    {/*                            <Path*/}
+                    {/*                                d="M12 0C8.793 0 5.772 1.241 3.517 3.517 1.241 5.772 0 8.793 0 12c0 3.207 1.241 6.228 3.517 8.483A11.893 11.893 0 0012 24c3.207 0 6.228-1.241 8.483-3.517A11.893 11.893 0 0024 12c0-3.207-1.241-6.228-3.517-8.483C18.228 1.241 15.207 0 12 0zm0 1.241c2.876 0 5.566 1.117 7.614 3.145S22.759 9.124 22.759 12c0 2.876-1.117 5.566-3.145 7.614-2.048 2.027-4.738 3.145-7.614 3.145-2.876 0-5.566-1.117-7.614-3.145S1.241 14.876 1.241 12c0-2.876 1.117-5.566 3.145-7.614S9.124 1.241 12 1.241zM9.22 8.586a.575.575 0 00-.427.187.6.6 0 000 .868L11.131 12l-2.358 2.338a.6.6 0 000 .869c.124.124.29.186.434.186.145 0 .31-.062.434-.186L12 12.869l2.338 2.338c.124.124.29.186.435.186.144 0 .31-.062.434-.186a.6.6 0 000-.869L12.869 12l2.338-2.338a.644.644 0 00.02-.89.6.6 0 00-.868 0L12 11.133l-2.338-2.36a.625.625 0 00-.442-.186z"*/}
+                    {/*                                fill="#393840"*/}
+                    {/*                            />*/}
+                    {/*                        </Svg>*/}
+                    {/*                    </TouchableOpacity>*/}
+
+                    {/*                </View>*/}
+
+
+                    {/*            </View>*/}
+                    {/*        </TouchableHighlight>*/}
+
+                    {/*    </TouchableOpacity>*/}
+
+                    {/*</Modal>*/}
 
 
 
@@ -1609,6 +2104,12 @@ export default class App extends Component {
 
                     <View style={[styles.registerWrapper, {height:this.state.isOpenRegisterModal ? '100%' : Platform.OS === 'ios' ? 55 : 48,}]}>
 
+                        {/*{this.state.isOpenRegisterModal &&*/}
+
+                        {/*    */}
+                        {/*  */}
+
+                        {/*}*/}
 
                         {!this.state.isOpenRegisterModal && !this.state.keyboardOpen &&
 
@@ -1683,14 +2184,6 @@ export default class App extends Component {
 
                                   {/*Bottom left END*/}
 
-
-
-
-
-
-
-
-
                                   <Svg width={169} height={168} viewBox="0 0 169 168" fill="none" xmlns="http://www.w3.org/2000/svg">
                                       <Rect x={0.283936} width={168} height={168} rx={84} fill="#fff" />
                                       <Path d="M27.504 57.168a4.52 4.52 0 01-1.708-.322 3.78 3.78 0 01-1.372-.98l.784-.756c.597.625 1.34.938 2.226.938.663 0 1.176-.163 1.54-.49.364-.327.546-.775.546-1.344 0-.57-.182-1.003-.546-1.302-.355-.308-.882-.462-1.582-.462h-.924l.182-1.092h.756c.56 0 1.003-.14 1.33-.42.336-.29.504-.681.504-1.176 0-.439-.135-.793-.406-1.064-.261-.28-.667-.42-1.218-.42-.765 0-1.512.299-2.24.896l-.7-.798c.896-.793 1.909-1.19 3.038-1.19.933 0 1.652.233 2.156.7.504.457.756 1.045.756 1.764 0 .588-.168 1.069-.504 1.442-.336.364-.798.611-1.386.742.635.065 1.162.303 1.582.714.42.41.63.97.63 1.68 0 .579-.15 1.092-.448 1.54-.29.439-.695.784-1.218 1.036-.523.243-1.115.364-1.778.364zm10.416-1.89c0 .299.051.523.154.672a.96.96 0 00.462.322l-.294.896c-.383-.047-.691-.154-.924-.322-.234-.168-.406-.43-.518-.784-.495.737-1.228 1.106-2.198 1.106-.728 0-1.302-.205-1.722-.616-.42-.41-.63-.947-.63-1.61 0-.784.28-1.386.84-1.806.569-.42 1.372-.63 2.408-.63h1.134v-.546c0-.523-.126-.896-.378-1.12-.252-.224-.64-.336-1.162-.336-.542 0-1.204.13-1.988.392l-.322-.938c.914-.336 1.764-.504 2.548-.504.868 0 1.516.215 1.946.644.429.42.644 1.022.644 1.806v3.374zm-3.024.924c.737 0 1.316-.383 1.736-1.148V53.36h-.966c-1.363 0-2.044.504-2.044 1.512 0 .439.107.77.322.994.214.224.532.336.952.336zm9.092-6.748c.943 0 1.633.336 2.072 1.008.439.672.658 1.62.658 2.842 0 1.157-.252 2.09-.756 2.8s-1.218 1.064-2.142 1.064c-.821 0-1.465-.28-1.932-.84v3.5l-1.288.154v-10.36h1.106l.098.994c.27-.373.597-.658.98-.854a2.512 2.512 0 011.204-.308zm-.476 6.664c1.213 0 1.82-.938 1.82-2.814 0-1.885-.555-2.828-1.666-2.828-.364 0-.695.107-.994.322-.299.215-.56.49-.784.826v3.598c.187.29.42.513.7.672.28.15.588.224.924.224zm11.007-3.024c0 .215-.009.434-.028.658h-4.704c.056.812.262 1.41.616 1.792.355.383.812.574 1.372.574.355 0 .682-.051.98-.154.3-.103.612-.266.938-.49l.56.77c-.784.616-1.642.924-2.576.924-1.026 0-1.829-.336-2.408-1.008-.569-.672-.854-1.596-.854-2.772 0-.765.122-1.442.364-2.03.252-.597.607-1.064 1.064-1.4.467-.336 1.013-.504 1.638-.504.98 0 1.732.322 2.254.966.523.644.784 1.535.784 2.674zm-1.274-.378c0-.728-.144-1.283-.434-1.666-.289-.383-.723-.574-1.302-.574-1.054 0-1.628.775-1.722 2.324h3.458v-.084zM57.9 57h-1.288v-7.378h4.606l-.168 1.064H57.9V57zm10.49 0h-1.275v-3.332c0-.56.019-1.092.056-1.596.038-.504.07-.835.098-.994L64.174 57h-1.526v-7.378h1.274v3.332c0 .495-.018 1.008-.056 1.54-.037.523-.065.859-.084 1.008l3.052-5.88h1.554V57zm5.377-7.546c.438 0 .84.065 1.204.196.364.121.714.322 1.05.602l-.616.812a2.93 2.93 0 00-.77-.406 2.246 2.246 0 00-.812-.14c-.597 0-1.064.238-1.4.714-.327.476-.49 1.18-.49 2.114 0 .933.163 1.624.49 2.072.327.439.793.658 1.4.658.29 0 .555-.042.798-.126.242-.093.513-.238.812-.434l.588.84c-.672.541-1.423.812-2.254.812-.999 0-1.788-.336-2.366-1.008-.57-.672-.854-1.6-.854-2.786 0-.784.13-1.47.392-2.058.261-.588.63-1.045 1.106-1.372.485-.327 1.06-.49 1.722-.49zm9.016.168l-.154 1.05h-2.366V57h-1.288v-6.328h-2.436v-1.05h6.244zm4.756-.168c.943 0 1.633.336 2.072 1.008.439.672.658 1.62.658 2.842 0 1.157-.252 2.09-.756 2.8s-1.218 1.064-2.142 1.064c-.822 0-1.466-.28-1.932-.84v3.5l-1.288.154v-10.36h1.106l.098.994c.27-.373.597-.658.98-.854a2.512 2.512 0 011.204-.308zm-.476 6.664c1.213 0 1.82-.938 1.82-2.814 0-1.885-.556-2.828-1.666-2.828-.364 0-.695.107-.994.322-.299.215-.56.49-.784.826v3.598c.186.29.42.513.7.672.28.15.588.224.924.224zM98.237 57h-1.274v-3.332c0-.56.019-1.092.056-1.596.038-.504.07-.835.098-.994L94.023 57h-1.526v-7.378h1.274v3.332c0 .495-.018 1.008-.056 1.54-.037.523-.065.859-.084 1.008l3.052-5.88h1.554V57zm6.078-7.546c.942 0 1.633.336 2.072 1.008.438.672.658 1.62.658 2.842 0 1.157-.252 2.09-.756 2.8s-1.218 1.064-2.142 1.064c-.822 0-1.466-.28-1.932-.84v3.5l-1.288.154v-10.36h1.106l.098.994c.27-.373.597-.658.98-.854a2.51 2.51 0 011.204-.308zm-.476 6.664c1.213 0 1.82-.938 1.82-2.814 0-1.885-.556-2.828-1.666-2.828-.364 0-.696.107-.994.322-.299.215-.56.49-.784.826v3.598a2 2 0 00.7.672c.28.15.588.224.924.224zm8.335.924c-.29.859-.696 1.535-1.218 2.03-.514.504-1.251.807-2.212.91l-.14-1.008c.485-.084.872-.205 1.162-.364.289-.159.518-.364.686-.616.177-.243.34-.574.49-.994h-.434l-2.478-7.378h1.372l1.974 6.44 1.932-6.44h1.33l-2.464 7.42zm9.711-.042h-1.274v-3.332c0-.56.019-1.092.056-1.596.038-.504.07-.835.098-.994L117.671 57h-1.526v-7.378h1.274v3.332c0 .495-.018 1.008-.056 1.54-.037.523-.065.859-.084 1.008l3.052-5.88h1.554V57zm-2.898-9.002c-.569 0-1.05-.145-1.442-.434a1.704 1.704 0 01-.658-1.204l.854-.182c.094.299.238.513.434.644.206.13.476.196.812.196.336 0 .612-.065.826-.196.215-.14.369-.355.462-.644l.854.182a1.667 1.667 0 01-.686 1.204c-.392.29-.877.434-1.456.434zm10.572 1.624l-.154 1.05h-2.366V57h-1.288v-6.328h-2.436v-1.05h6.244zm6.584 3.472c0 .215-.01.434-.028.658h-4.704c.056.812.261 1.41.616 1.792.354.383.812.574 1.372.574a3 3 0 00.98-.154c.298-.103.611-.266.938-.49l.56.77c-.784.616-1.643.924-2.576.924-1.027 0-1.83-.336-2.408-1.008-.57-.672-.854-1.596-.854-2.772 0-.765.121-1.442.364-2.03.252-.597.606-1.064 1.064-1.4.466-.336 1.012-.504 1.638-.504.98 0 1.731.322 2.254.966.522.644.784 1.535.784 2.674zm-1.274-.378c0-.728-.145-1.283-.434-1.666-.29-.383-.724-.574-1.302-.574-1.055 0-1.629.775-1.722 2.324h3.458v-.084zm6.054-3.262c.438 0 .84.065 1.204.196.364.121.714.322 1.05.602l-.616.812a2.94 2.94 0 00-.77-.406 2.25 2.25 0 00-.812-.14c-.598 0-1.064.238-1.4.714-.327.476-.49 1.18-.49 2.114 0 .933.163 1.624.49 2.072.326.439.793.658 1.4.658.289 0 .555-.042.798-.126.242-.093.513-.238.812-.434l.588.84c-.672.541-1.424.812-2.254.812-.999 0-1.788-.336-2.366-1.008-.57-.672-.854-1.6-.854-2.786 0-.784.13-1.47.392-2.058.261-.588.63-1.045 1.106-1.372.485-.327 1.059-.49 1.722-.49zm6.3 2.548c1.102 0 1.9.215 2.394.644.495.43.742 1.04.742 1.834 0 .83-.28 1.46-.84 1.89-.55.42-1.236.63-2.058.63h-2.506v-7.378h1.288v2.38h.98zm.126 3.99c.523 0 .924-.117 1.204-.35.29-.233.434-.62.434-1.162 0-.513-.135-.891-.406-1.134-.261-.243-.718-.364-1.372-.364h-.966v3.01h1.106zm5.196-.77a.95.95 0 01.7.28c.187.187.28.415.28.686 0 .29-.084.62-.252.994l-.938 2.142h-.924l.56-2.324a1.08 1.08 0 01-.294-.35 1.084 1.084 0 01-.098-.462c0-.27.093-.5.28-.686a.933.933 0 01.686-.28zm-121.863 10.4V73h-1.288v-3.08c-.27.252-.607.453-1.008.602-.392.14-.798.21-1.218.21-.7 0-1.227-.187-1.582-.56-.355-.383-.532-.924-.532-1.624v-2.926h1.288v2.772c0 .467.093.807.28 1.022.196.205.495.308.896.308a2.63 2.63 0 001.022-.224c.364-.15.649-.34.854-.574v-3.304h1.288zm7.676 0l-.154 1.05h-2.367V73H34.55v-6.328h-2.435v-1.05h6.244zm3.784-.168c1.035 0 1.838.345 2.407 1.036.58.69.868 1.629.868 2.814 0 .765-.13 1.442-.392 2.03a3.127 3.127 0 01-1.133 1.358c-.495.317-1.083.476-1.765.476-1.035 0-1.843-.345-2.422-1.036-.578-.69-.867-1.629-.867-2.814 0-.765.13-1.437.392-2.016.26-.588.639-1.04 1.134-1.358.494-.327 1.087-.49 1.778-.49zm0 1.036c-1.28 0-1.919.943-1.919 2.828 0 1.876.635 2.814 1.904 2.814 1.27 0 1.904-.943 1.904-2.828 0-1.876-.63-2.814-1.89-2.814zm8.658-.392c.84 0 1.508.303 2.002.91.504.607.756 1.433.756 2.478 0 1.167-.294 2.072-.882 2.716-.588.644-1.376.966-2.366.966-.99 0-1.782-.35-2.38-1.05-.588-.7-.882-1.76-.882-3.178 0-1.073.08-1.95.238-2.632.168-.69.453-1.255.854-1.694.41-.448.985-.798 1.722-1.05.55-.187.99-.355 1.316-.504.336-.15.677-.34 1.022-.574l.546.966c-.326.205-.667.397-1.022.574-.345.168-.76.331-1.246.49-.466.159-.835.34-1.106.546-.27.196-.49.485-.658.868-.158.373-.266.887-.322 1.54.262-.43.598-.765 1.008-1.008.41-.243.878-.364 1.4-.364zm-.49 6.034c.57 0 1.022-.191 1.358-.574.336-.392.504-1.069.504-2.03 0-.85-.14-1.46-.42-1.834-.27-.373-.667-.56-1.19-.56-.43 0-.83.117-1.204.35-.373.224-.681.57-.924 1.036v.896c0 .868.164 1.54.49 2.016.336.467.798.7 1.386.7zm7.54-4.13c1.102 0 1.9.215 2.395.644.494.43.742 1.04.742 1.834 0 .83-.28 1.46-.84 1.89-.551.42-1.237.63-2.058.63h-2.366v-7.378h1.288v2.38h.84zm4.2-2.38h1.289V73H62.05v-7.378zm-4.073 6.37c.522 0 .924-.117 1.204-.35.289-.233.434-.62.434-1.162 0-.513-.136-.891-.406-1.134-.262-.243-.719-.364-1.372-.364h-.826v3.01h.966zm14.49-6.538c.439 0 .84.065 1.204.196.364.121.714.322 1.05.602l-.616.812a2.93 2.93 0 00-.77-.406 2.247 2.247 0 00-.812-.14c-.597 0-1.064.238-1.4.714-.327.476-.49 1.18-.49 2.114 0 .933.163 1.624.49 2.072.327.439.793.658 1.4.658.29 0 .555-.042.798-.126.243-.093.513-.238.812-.434l.588.84c-.672.541-1.423.812-2.254.812-.999 0-1.787-.336-2.366-1.008-.57-.672-.854-1.6-.854-2.786 0-.784.13-1.47.392-2.058.261-.588.63-1.045 1.106-1.372.485-.327 1.06-.49 1.722-.49zm9.437.168V73h-1.288v-6.328h-2.282l-.21 2.464c-.084.999-.192 1.745-.322 2.24-.122.495-.318.877-.588 1.148-.262.261-.663.476-1.204.644l-.322-1.022c.317-.112.54-.257.672-.434.13-.177.228-.448.294-.812.065-.364.135-.999.21-1.904l.294-3.374h4.746zm5.651 7.42c-.29.859-.695 1.535-1.218 2.03-.513.504-1.25.807-2.212.91l-.14-1.008c.485-.084.873-.205 1.162-.364a1.91 1.91 0 00.686-.616c.177-.243.34-.574.49-.994h-.434l-2.478-7.378h1.372l1.974 6.44 1.932-6.44h1.33l-2.464 7.42zm12.456-7.42V73h-8.484v-7.378h1.26v6.342h2.366v-6.342h1.232v6.342h2.366v-6.342h1.26zm7.663 5.656c0 .299.051.523.154.672.103.14.257.247.462.322l-.294.896c-.383-.047-.691-.154-.924-.322-.233-.168-.406-.43-.518-.784-.495.737-1.227 1.106-2.198 1.106-.728 0-1.302-.205-1.722-.616-.42-.41-.63-.947-.63-1.61 0-.784.28-1.386.84-1.806.569-.42 1.372-.63 2.408-.63h1.134v-.546c0-.523-.126-.896-.378-1.12-.252-.224-.639-.336-1.162-.336-.541 0-1.204.13-1.988.392l-.322-.938c.915-.336 1.764-.504 2.548-.504.868 0 1.517.215 1.946.644.429.42.644 1.022.644 1.806v3.374zm-3.024.924c.737 0 1.316-.383 1.736-1.148V69.36h-.966c-1.363 0-2.044.504-2.044 1.512 0 .439.107.77.322.994.215.224.532.336.952.336zm10.415-6.58l-.154 1.05h-2.366V73h-1.288v-6.328h-2.436v-1.05h6.244zm3.635 2.38c1.102 0 1.9.215 2.394.644.495.43.742 1.04.742 1.834 0 .83-.28 1.46-.84 1.89-.55.42-1.236.63-2.058.63h-2.506v-7.378h1.288v2.38h.98zm.126 3.99c.523 0 .924-.117 1.204-.35.29-.233.434-.62.434-1.162 0-.513-.135-.891-.406-1.134-.261-.243-.718-.364-1.372-.364h-.966v3.01h1.106zM30.584 87.278c0 .299.051.523.154.672a.96.96 0 00.462.322l-.294.896c-.383-.047-.69-.154-.924-.322-.233-.168-.406-.43-.518-.784-.495.737-1.227 1.106-2.198 1.106-.728 0-1.302-.205-1.722-.616-.42-.41-.63-.947-.63-1.61 0-.784.28-1.386.84-1.806.57-.42 1.372-.63 2.408-.63h1.134v-.546c0-.523-.126-.896-.378-1.12-.252-.224-.64-.336-1.162-.336-.541 0-1.204.13-1.988.392l-.322-.938c.915-.336 1.764-.504 2.548-.504.868 0 1.517.215 1.946.644.43.42.644 1.022.644 1.806v3.374zm-3.024.924c.737 0 1.316-.383 1.736-1.148V85.36h-.966c-1.363 0-2.044.504-2.044 1.512 0 .439.107.77.322.994.215.224.532.336.952.336zm8.453.84c-.29.859-.695 1.535-1.218 2.03-.513.504-1.25.807-2.212.91l-.14-1.008c.485-.084.873-.205 1.162-.364a1.91 1.91 0 00.686-.616c.177-.243.34-.574.49-.994h-.434l-2.478-7.378h1.372l1.974 6.44 1.932-6.44h1.33l-2.464 7.42zm9.743-1.078V91.1h-1.05l-.21-2.1h-4.732l-.21 2.1h-1.05v-3.136h.518c.224-.15.402-.317.532-.504.131-.196.248-.532.35-1.008.112-.476.201-1.171.266-2.086l.196-2.744h4.62v6.342h.77zm-2.058-5.32h-2.17l-.112 1.554c-.065.868-.14 1.535-.224 2.002-.084.467-.205.826-.364 1.078-.149.252-.368.48-.658.686h3.528v-5.32zM53.416 89h-1.274v-3.332c0-.56.019-1.092.056-1.596.037-.504.07-.835.098-.994L49.202 89h-1.526v-7.378h1.274v3.332c0 .495-.019 1.008-.056 1.54-.037.523-.065.859-.084 1.008l3.052-5.88h1.554V89zm5.462-7.546c1.035 0 1.838.345 2.407 1.036.58.69.869 1.629.869 2.814 0 .765-.131 1.442-.393 2.03a3.126 3.126 0 01-1.134 1.358c-.494.317-1.082.476-1.764.476-1.035 0-1.843-.345-2.422-1.036-.578-.69-.867-1.629-.867-2.814 0-.765.13-1.437.392-2.016.26-.588.639-1.04 1.133-1.358.495-.327 1.088-.49 1.779-.49zm0 1.036c-1.28 0-1.919.943-1.919 2.828 0 1.876.635 2.814 1.904 2.814 1.27 0 1.904-.943 1.904-2.828 0-1.876-.63-2.814-1.89-2.814zM65.603 89h-1.288v-7.378h4.606l-.168 1.064h-3.15V89zm10.49 0h-1.275v-3.332c0-.56.019-1.092.056-1.596.038-.504.07-.835.098-.994L71.88 89h-1.526v-7.378h1.274v3.332c0 .495-.018 1.008-.056 1.54-.037.523-.065.859-.084 1.008l3.052-5.88h1.554V89zm8.61-1.036V91.1h-1.05l-.21-2.1h-4.731l-.21 2.1h-1.05v-3.136h.518c.224-.15.401-.317.532-.504.13-.196.247-.532.35-1.008.112-.476.2-1.171.266-2.086l.196-2.744h4.62v6.342h.77zm-2.057-5.32h-2.17l-.112 1.554c-.066.868-.14 1.535-.224 2.002-.084.467-.206.826-.364 1.078a2.28 2.28 0 01-.658.686h3.528v-5.32zm6.105 1.358c1.102 0 1.9.215 2.394.644.495.43.742 1.04.742 1.834 0 .83-.28 1.46-.84 1.89-.55.42-1.236.63-2.058.63h-2.366v-7.378h1.288v2.38h.84zm4.2-2.38h1.288V89h-1.288v-7.378zm-4.074 6.37c.523 0 .924-.117 1.204-.35.29-.233.434-.62.434-1.162 0-.513-.135-.891-.406-1.134-.26-.243-.718-.364-1.372-.364h-.826v3.01h.966zM31.354 105H30.08v-3.332c0-.56.019-1.092.056-1.596.037-.504.07-.835.098-.994L27.14 105h-1.526v-7.378h1.274v3.332c0 .495-.019 1.008-.056 1.54-.037.523-.065.859-.084 1.008l3.052-5.88h1.554V105zm9.117-7.546c.44 0 .84.065 1.205.196.363.121.713.322 1.05.602l-.617.812a2.93 2.93 0 00-.77-.406 2.246 2.246 0 00-.811-.14c-.598 0-1.064.238-1.4.714-.327.476-.49 1.181-.49 2.114 0 .933.163 1.624.49 2.072.326.439.793.658 1.4.658.289 0 .555-.042.797-.126.243-.093.514-.238.813-.434l.587.84c-.672.541-1.423.812-2.254.812-.998 0-1.787-.336-2.365-1.008-.57-.672-.855-1.601-.855-2.786 0-.784.131-1.47.393-2.058.26-.588.63-1.045 1.105-1.372.486-.327 1.06-.49 1.722-.49zm6.532 0c1.036 0 1.838.345 2.408 1.036.578.69.868 1.629.868 2.814 0 .765-.131 1.442-.392 2.03a3.127 3.127 0 01-1.134 1.358c-.495.317-1.083.476-1.764.476-1.036 0-1.844-.345-2.422-1.036-.579-.691-.868-1.629-.868-2.814 0-.765.13-1.437.392-2.016.261-.588.639-1.04 1.134-1.358.494-.327 1.087-.49 1.778-.49zm0 1.036c-1.279 0-1.918.943-1.918 2.828 0 1.876.634 2.814 1.904 2.814 1.269 0 1.904-.943 1.904-2.828 0-1.876-.63-2.814-1.89-2.814zm8.126-1.036c.44 0 .84.065 1.204.196.364.121.714.322 1.05.602l-.616.812a2.93 2.93 0 00-.77-.406 2.246 2.246 0 00-.812-.14c-.597 0-1.064.238-1.4.714-.326.476-.49 1.181-.49 2.114 0 .933.164 1.624.49 2.072.327.439.794.658 1.4.658.29 0 .556-.042.798-.126.243-.093.514-.238.812-.434l.588.84c-.672.541-1.423.812-2.254.812-.998 0-1.787-.336-2.366-1.008-.569-.672-.854-1.601-.854-2.786 0-.784.131-1.47.392-2.058.262-.588.63-1.045 1.106-1.372.486-.327 1.06-.49 1.722-.49zm9.017.168l-.154 1.05h-2.366V105h-1.288v-6.328h-2.436v-1.05h6.244zm5.777 5.656c0 .299.051.523.154.672.103.14.257.247.462.322l-.294.896c-.383-.047-.69-.154-.924-.322-.233-.168-.406-.429-.518-.784-.495.737-1.227 1.106-2.198 1.106-.728 0-1.302-.205-1.722-.616-.42-.411-.63-.947-.63-1.61 0-.784.28-1.386.84-1.806.57-.42 1.372-.63 2.408-.63h1.134v-.546c0-.523-.126-.896-.378-1.12-.252-.224-.64-.336-1.162-.336-.541 0-1.204.13-1.988.392l-.322-.938c.915-.336 1.764-.504 2.548-.504.868 0 1.517.215 1.946.644.43.42.644 1.022.644 1.806v3.374zm-3.024.924c.737 0 1.316-.383 1.736-1.148v-1.694h-.966c-1.363 0-2.044.504-2.044 1.512 0 .439.107.77.322.994.215.224.532.336.952.336zm9.596-3.206c1.25.121 1.876.7 1.876 1.736 0 .775-.285 1.349-.854 1.722-.56.364-1.311.546-2.254.546h-2.66v-7.28a12.15 12.15 0 012.422-.266c.915 0 1.638.173 2.17.518.532.345.798.84.798 1.484 0 .42-.126.761-.378 1.022s-.625.434-1.12.518zm-1.456-2.548a7.73 7.73 0 00-1.148.084v2.086h1.386c.448 0 .793-.084 1.036-.252.243-.168.364-.453.364-.854 0-.373-.135-.644-.406-.812-.27-.168-.681-.252-1.232-.252zm.224 5.544c.55 0 .98-.093 1.288-.28.308-.187.462-.523.462-1.008 0-.401-.13-.691-.392-.868-.261-.177-.705-.266-1.33-.266h-1.4v2.422h1.372zm10.545-6.37V105H84.52v-6.328h-2.282l-.21 2.464c-.084.999-.192 1.745-.322 2.24-.122.495-.318.877-.588 1.148-.262.261-.663.476-1.204.644l-.322-1.022c.317-.112.541-.257.672-.434.13-.177.228-.448.294-.812.065-.364.135-.999.21-1.904l.294-3.374h4.746zm7.751 0V105h-1.288v-2.828h-1.61L89.107 105h-1.442l1.764-3.122c-.868-.411-1.302-1.078-1.302-2.002 0-.728.261-1.283.784-1.666.523-.392 1.255-.588 2.198-.588h2.45zm-1.288 3.57v-2.576h-1.19c-.532 0-.933.103-1.204.308-.261.196-.392.513-.392.952 0 .467.121.803.364 1.008.252.205.653.308 1.204.308h1.218zm8.964-3.57l-.154 1.05h-2.366V105h-1.288v-6.328h-2.436v-1.05h6.244zm3.635 2.38c1.102 0 1.9.215 2.394.644.495.429.742 1.041.742 1.834 0 .831-.28 1.461-.84 1.89-.55.42-1.236.63-2.058.63h-2.506v-7.378h1.288v2.38h.98zm.126 3.99c.523 0 .924-.117 1.204-.35.29-.233.434-.621.434-1.162 0-.513-.135-.891-.406-1.134-.261-.243-.718-.364-1.372-.364h-.966v3.01h1.106zm11.288-6.538c.439 0 .84.065 1.204.196.364.121.714.322 1.05.602l-.616.812a2.925 2.925 0 00-.77-.406 2.243 2.243 0 00-.812-.14c-.597 0-1.064.238-1.4.714-.326.476-.49 1.181-.49 2.114 0 .933.164 1.624.49 2.072.327.439.794.658 1.4.658.29 0 .556-.042.798-.126.243-.093.514-.238.812-.434l.588.84c-.672.541-1.423.812-2.254.812-.998 0-1.787-.336-2.366-1.008-.569-.672-.854-1.601-.854-2.786 0-.784.131-1.47.392-2.058.262-.588.63-1.045 1.106-1.372.486-.327 1.06-.49 1.722-.49zm7.925 3.542c1.25.121 1.876.7 1.876 1.736 0 .775-.285 1.349-.854 1.722-.56.364-1.312.546-2.254.546h-2.66v-7.28a12.147 12.147 0 012.422-.266c.914 0 1.638.173 2.17.518.532.345.798.84.798 1.484 0 .42-.126.761-.378 1.022s-.626.434-1.12.518zm-1.456-2.548c-.392 0-.775.028-1.148.084v2.086h1.386c.448 0 .793-.084 1.036-.252.242-.168.364-.453.364-.854 0-.373-.136-.644-.406-.812-.271-.168-.682-.252-1.232-.252zm.224 5.544c.55 0 .98-.093 1.288-.28.308-.187.462-.523.462-1.008 0-.401-.131-.691-.392-.868-.262-.177-.705-.266-1.33-.266h-1.4v2.422h1.372zm7.994-6.538c1.036 0 1.839.345 2.408 1.036.579.69.868 1.629.868 2.814 0 .765-.13 1.442-.392 2.03a3.122 3.122 0 01-1.134 1.358c-.494.317-1.082.476-1.764.476-1.036 0-1.843-.345-2.422-1.036-.578-.691-.868-1.629-.868-2.814 0-.765.131-1.437.392-2.016.262-.588.64-1.04 1.134-1.358.495-.327 1.088-.49 1.778-.49zm0 1.036c-1.278 0-1.918.943-1.918 2.828 0 1.876.635 2.814 1.904 2.814 1.27 0 1.904-.943 1.904-2.828 0-1.876-.63-2.814-1.89-2.814zM142.15 105h-1.274v-3.332c0-.56.019-1.092.056-1.596.038-.504.07-.835.098-.994L137.936 105h-1.526v-7.378h1.274v3.332c0 .495-.018 1.008-.056 1.54-.037.523-.065.859-.084 1.008l3.052-5.88h1.554V105zM32.838 121h-1.26l-.336-3.486a15.03 15.03 0 01-.07-1.204c-.01-.448-.014-.929-.014-1.442l-1.68 5.32H28.26l-1.568-5.306c0 1.232-.019 2.105-.056 2.618l-.266 3.5h-1.246l.658-7.378h1.666l1.442 5.278 1.582-5.278h1.694l.672 7.378zm7.173-1.722c0 .299.052.523.154.672.103.14.257.247.462.322l-.294.896c-.382-.047-.69-.154-.923-.322-.234-.168-.406-.429-.518-.784-.495.737-1.228 1.106-2.199 1.106-.727 0-1.301-.205-1.721-.616-.42-.411-.63-.947-.63-1.61 0-.784.28-1.386.84-1.806.569-.42 1.371-.63 2.407-.63h1.135v-.546c0-.523-.127-.896-.378-1.12-.252-.224-.64-.336-1.162-.336-.542 0-1.204.131-1.988.392l-.322-.938c.914-.336 1.764-.504 2.547-.504.868 0 1.517.215 1.947.644.429.42.643 1.022.643 1.806v3.374zm-3.024.924c.738 0 1.316-.383 1.736-1.148v-1.694h-.965c-1.363 0-2.044.504-2.044 1.512 0 .439.107.77.322.994.214.224.532.336.951.336zm9.093-6.748c.942 0 1.633.336 2.072 1.008.438.672.658 1.619.658 2.842 0 1.157-.252 2.091-.756 2.8-.504.709-1.218 1.064-2.142 1.064-.822 0-1.466-.28-1.932-.84v3.5l-1.288.154v-10.36h1.106l.098.994a2.76 2.76 0 01.98-.854 2.516 2.516 0 011.204-.308zm-.476 6.664c1.213 0 1.82-.938 1.82-2.814 0-1.885-.556-2.828-1.666-2.828-.364 0-.696.107-.994.322a3.17 3.17 0 00-.784.826v3.598c.186.289.42.513.7.672.28.149.588.224.924.224zm13.92-6.496V121h-8.485v-7.378h1.26v6.342h2.366v-6.342h1.232v6.342h2.366v-6.342h1.26zm6.08-.168c.944 0 1.634.336 2.073 1.008.438.672.658 1.619.658 2.842 0 1.157-.252 2.091-.756 2.8-.504.709-1.218 1.064-2.142 1.064-.822 0-1.465-.28-1.932-.84v3.5l-1.288.154v-10.36h1.106l.098.994a2.76 2.76 0 01.98-.854 2.516 2.516 0 011.204-.308zm-.475 6.664c1.213 0 1.82-.938 1.82-2.814 0-1.885-.555-2.828-1.666-2.828-.364 0-.695.107-.994.322a3.17 3.17 0 00-.784.826v3.598c.186.289.42.513.7.672.28.149.588.224.924.224zm8.335.924c-.29.859-.696 1.535-1.218 2.03-.514.504-1.251.807-2.212.91l-.14-1.008c.485-.084.872-.205 1.162-.364.289-.159.518-.364.686-.616.177-.243.34-.574.49-.994h-.434l-2.478-7.378h1.372l1.974 6.44 1.932-6.44h1.33l-2.464 7.42zm8.955-7.42l-.154 1.05H79.9V121h-1.288v-6.328h-2.436v-1.05h6.244zm3.496 2.38c1.101 0 1.899.215 2.394.644.494.429.742 1.041.742 1.834 0 .831-.28 1.461-.84 1.89-.551.42-1.237.63-2.058.63h-2.366v-7.378h1.288v2.38h.84zm4.2-2.38h1.288V121h-1.288v-7.378zm-4.074 6.37c.522 0 .924-.117 1.204-.35.289-.233.434-.621.434-1.162 0-.513-.136-.891-.406-1.134-.262-.243-.719-.364-1.372-.364h-.826v3.01h.966z" fill="#54535F"/>
@@ -1706,10 +2199,19 @@ export default class App extends Component {
 
 
                         <TouchableOpacity
-                            onPress={() => {this.setState({isOpenRegisterModal: !this.state.isOpenRegisterModal}); console.log('dwd')}}
+                            onPress={() => {
+                                this.setState({
+                                    show_politic_modal: !this.state.isOpenRegisterModal ?  !this.state.show_politic_modal : this.state.show_politic_modal,
+                                    isOpenRegisterModal: !this.state.isOpenRegisterModal,
+                                });
+                            }}
                             style={[{flexDirection:'row', justifyContent:'space-between',  }, Platform.OS === 'ios' ? {} : {position: 'relative', top: -5, padding: 5}]}
                         >
-                            <Text style={{color:'#54535F', fontSize:20, fontWeight:'bold'}}>Регистрация</Text>
+
+                            <Text style={{color:'#54535F', fontSize:20, fontWeight:'bold'}}>
+                                {/*Регистрация*/}
+                                {this.state.language.sign_up2}
+                            </Text>
 
                             <Svg
                                 style={this.state.isOpenRegisterModal ? {} : {
@@ -1937,7 +2439,8 @@ export default class App extends Component {
                                         !this.state.reg_email_valid &&
 
                                         <Text style={[styles.inp_buttom_label, {marginBottom: 6, position:'absolute', bottom:-1}]}>
-                                            Введите адрес электронной почты
+                                            {/*Введите адрес электронной почты*/}
+                                            {this.state.language.reg_email_error}
                                         </Text>
                                     )
                                 }
@@ -1975,37 +2478,23 @@ export default class App extends Component {
                                 }
 
 
-                                {/*<TextInput*/}
-                                {/*    value={this.state.reg_phone}*/}
-                                {/*    onChangeText={(reg_phone) => this.changeRegisterPhone(reg_phone)}*/}
-                                {/*    underlineColorAndroid ='transparent'*/}
-                                {/*    label={*/}
-                                {/*        <Text*/}
-                                {/*            style={[*/}
-                                {/*                {color: this.state.reg_phone_error ? '#A4223C' : this.state.reg_phone_valid ? '#337363' : '#55545F' },*/}
-                                {/*            ]}*/}
-                                {/*         >*/}
-                                {/*            Телефон <Text style={{color:'red'}}>*</Text>*/}
-                                {/*        </Text>*/}
-                                {/*    }*/}
-                                {/*    error={false}*/}
-                                {/*    underlineColor='transparent'*/}
-                                {/*    style={[*/}
-                                {/*        styles.input,*/}
-                                {/*        this.state.reg_phone_error && {*/}
-                                {/*            borderWidth:1, borderColor:'#A4223C'*/}
-                                {/*        },*/}
-                                {/*        this.state.reg_phone_valid && {*/}
-                                {/*            borderWidth:1, borderColor:'#337363'*/}
-                                {/*        }*/}
-                                {/*    ]}*/}
-                                {/*    theme={{colors: {text: '#55545F', primary: 'transparent'}}}*/}
-                                {/*    selectionColor='#E1C1B7'*/}
-                                {/*    activeOutlineColor='transparent'*/}
-
-                                {/*/>*/}
-
-                                <MaskInput
+                                <TextInput
+                                    value={this.state.reg_phone}
+                                    onChangeText={(reg_phone) => this.changeRegisterPhone(reg_phone)}
+                                    underlineColorAndroid ='transparent'
+                                    label={
+                                        <Text
+                                            style={[
+                                                {color: this.state.reg_phone_error ? '#A4223C' : this.state.reg_phone_valid ? '#337363' : '#55545F' },
+                                            ]}
+                                         >
+                                            {/*Телефон */}
+                                            {this.state.language.phone}
+                                            <Text style={{color:'red'}}> *</Text>
+                                        </Text>
+                                    }
+                                    error={false}
+                                    underlineColor='transparent'
                                     style={[
                                         styles.input,
                                         this.state.reg_phone_error && {
@@ -2015,21 +2504,38 @@ export default class App extends Component {
                                             borderWidth:1, borderColor:'#337363'
                                         }
                                     ]}
-                                    value={this.state.reg_phone_masked}
-                                    onChangeText={(masked, unmasked) => {
+                                    theme={{colors: {text: '#55545F', primary: 'transparent'}}}
+                                    selectionColor='#E1C1B7'
+                                    activeOutlineColor='transparent'
 
-                                        this.changeRegisterPhone(masked,unmasked);
-
-                                        // you can use the unmasked value as well
-
-                                        // assuming you typed "9" all the way:
-                                        //console.log(masked); // (99) 99999-9999
-                                        //console.log(unmasked); // 99999999999
-                                    }}
-                                    mask={[ '+', /\d/, /\d/,/\d/, /\d/, /\d/, /\d/, /\d/, /\d/,  /\d/,/\d/, /\d/, /\d/,  /\d/, /\d/, ]}
-                                    // mask={[ '+', /\d/, /\d/,/\d/, ' ', '(', /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/,  '-', /\d/,/\d/,'-', /\d/, /\d/, ]}
-                                    // mask={[ '+' ]}
                                 />
+
+                                {/*<MaskInput*/}
+                                {/*    style={[*/}
+                                {/*        styles.input,*/}
+                                {/*        this.state.reg_phone_error && {*/}
+                                {/*            borderWidth:1, borderColor:'#A4223C'*/}
+                                {/*        },*/}
+                                {/*        this.state.reg_phone_valid && {*/}
+                                {/*            borderWidth:1, borderColor:'#337363'*/}
+                                {/*        }*/}
+                                {/*    ]}*/}
+                                {/*    value={this.state.reg_phone_masked}*/}
+                                {/*    placeholder={'test'}*/}
+                                {/*    onChangeText={(masked, unmasked) => {*/}
+
+                                {/*        this.changeRegisterPhone(masked,unmasked);*/}
+
+                                {/*        // you can use the unmasked value as well*/}
+
+                                {/*        // assuming you typed "9" all the way:*/}
+                                {/*        //console.log(masked); // (99) 99999-9999*/}
+                                {/*        //console.log(unmasked); // 99999999999*/}
+                                {/*    }}*/}
+                                {/*    mask={[ '+', /\d/, /\d/,/\d/, /\d/, /\d/, /\d/, /\d/, /\d/,  /\d/,/\d/, /\d/, /\d/,  /\d/, /\d/, ]}*/}
+                                {/*    // mask={[ '+', /\d/, /\d/,/\d/, ' ', '(', /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/,  '-', /\d/,/\d/,'-', /\d/, /\d/, ]}*/}
+                                {/*    // mask={[ '+' ]}*/}
+                                {/*/>*/}
 
 
 
@@ -2045,7 +2551,9 @@ export default class App extends Component {
                                         !this.state.reg_phone_valid &&
                                         <Text style={[styles.inp_buttom_label, {marginBottom: 6, position:'absolute', bottom:-1}]}>
                                             {/*Введите телефон в формате +375 (__) ___-__-__*/}
-                                            Введите телефон
+                                            {/*Введите телефон*/}
+                                            {this.state.language.reg_phone}
+
                                         </Text>
                                     )
                                 }
@@ -2101,7 +2609,9 @@ export default class App extends Component {
                                                 {color: this.state.reg_password_error ? '#A4223C' : this.state.reg_password_valid ? '#337363' : '#55545F'  },
                                             ]
                                             }>
-                                            Пароль <Text style={{color:'red'}}>*</Text>
+                                            {/*Пароль */}
+                                            {this.state.language.password}
+                                            <Text style={{color:'red'}}> *</Text>
                                         </Text>
                                     }
                                     secureTextEntry={true}
@@ -2123,7 +2633,8 @@ export default class App extends Component {
                                         !this.state.reg_password_valid &&
 
                                         <Text style={[styles.inp_buttom_label, {marginBottom: 6, position:'absolute', bottom:-1}]}>
-                                            Введите пароль минимум из 6 символов
+                                            {/*Введите пароль минимум из 6 символов*/}
+                                            {this.state.language.reg_password_error}
                                         </Text>
                                     )
 
@@ -2181,7 +2692,9 @@ export default class App extends Component {
                                                 {color: this.state.reg_confirm_password_error ? '#A4223C' : this.state.reg_confirm_password_valid ? '#337363' :  '#55545F'  },
                                             ]}
                                         >
-                                            Повторите пароль <Text style={{color:'red'}}>*</Text>
+                                            {/*Повторите пароль*/}
+                                            {this.state.language.repeat_password}
+                                            <Text style={{color:'red'}}> *</Text>
                                         </Text>
                                     }
                                     secureTextEntry={true}
@@ -2202,7 +2715,8 @@ export default class App extends Component {
                                     (
                                         !this.state.reg_confirm_password_valid &&
                                         <Text style={[styles.inp_buttom_label, {marginBottom: 6, position:'absolute', bottom:-1}]}>
-                                            Введите пароль минимум из 6 символов
+                                            {/*Введите пароль минимум из 6 символов*/}
+                                            {this.state.language.reg_password_error}
                                         </Text>
                                     )
 
@@ -2219,35 +2733,35 @@ export default class App extends Component {
                         <View style={styles.registerBottom}>
 
 
-                            <View style={styles.registerBottomTop}>
+                            {/*<View style={styles.registerBottomTop}>*/}
 
-                                <TouchableOpacity onPress={()=>{this.setState({registerPolicy: !this.state.registerPolicy})}}>
-                                    <View>
+                            {/*    <TouchableOpacity onPress={()=>{this.setState({registerPolicy: !this.state.registerPolicy})}}>*/}
+                            {/*        <View>*/}
 
-                                        {!this.state.registerPolicy &&
+                            {/*            {!this.state.registerPolicy &&*/}
 
-                                            <Svg  width={24}  height={24}  viewBox="0 0 25 24"  fill="none"  xmlns="http://www.w3.org/2000/svg">
-                                                <Path d="M4.5 1h16v-2h-16v2zm19 3v16h2V4h-2zm-3 19h-16v2h16v-2zm-19-3V4h-2v16h2zm3 3a3 3 0 01-3-3h-2a5 5 0 005 5v-2zm19-3a3 3 0 01-3 3v2a5 5 0 005-5h-2zm-3-19a3 3 0 013 3h2a5 5 0 00-5-5v2zm-16-2a5 5 0 00-5 5h2a3 3 0 013-3v-2z" fill="#9F9EAE"/>
-                                            </Svg>
+                            {/*                <Svg  width={24}  height={24}  viewBox="0 0 25 24"  fill="none"  xmlns="http://www.w3.org/2000/svg">*/}
+                            {/*                    <Path d="M4.5 1h16v-2h-16v2zm19 3v16h2V4h-2zm-3 19h-16v2h16v-2zm-19-3V4h-2v16h2zm3 3a3 3 0 01-3-3h-2a5 5 0 005 5v-2zm19-3a3 3 0 01-3 3v2a5 5 0 005-5h-2zm-3-19a3 3 0 013 3h2a5 5 0 00-5-5v2zm-16-2a5 5 0 00-5 5h2a3 3 0 013-3v-2z" fill="#9F9EAE"/>*/}
+                            {/*                </Svg>*/}
 
-                                        }
+                            {/*            }*/}
 
-                                        {this.state.registerPolicy &&
-                                            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <Path d="M0 4a4 4 0 014-4h16a4 4 0 014 4v16a4 4 0 01-4 4H4a4 4 0 01-4-4V4z" fill="#55545F"/>
-                                                <Path  d="M8.5 11.5l3 3 5-5"  stroke="#fff"  strokeLinecap="round"  strokeLinejoin="round" />
-                                            </Svg>
+                            {/*            {this.state.registerPolicy &&*/}
+                            {/*                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">*/}
+                            {/*                    <Path d="M0 4a4 4 0 014-4h16a4 4 0 014 4v16a4 4 0 01-4 4H4a4 4 0 01-4-4V4z" fill="#55545F"/>*/}
+                            {/*                    <Path  d="M8.5 11.5l3 3 5-5"  stroke="#fff"  strokeLinecap="round"  strokeLinejoin="round" />*/}
+                            {/*                </Svg>*/}
 
-                                        }
+                            {/*            }*/}
 
-                                    </View>
-                                </TouchableOpacity>
+                            {/*        </View>*/}
+                            {/*    </TouchableOpacity>*/}
 
-                                <Text style={[styles.registerBottomTopText, this.state.registerPolicyError ? {color:'#A4223C'} : {}]}>
-                                    Я согласен с обработкой персональных данных
-                                </Text>
+                            {/*    <Text style={[styles.registerBottomTopText, this.state.registerPolicyError ? {color:'#A4223C'} : {}]}>*/}
+                            {/*        Я согласен с обработкой персональных данных*/}
+                            {/*    </Text>*/}
 
-                            </View>
+                            {/*</View>*/}
 
 
                             <View style={{
@@ -2267,7 +2781,8 @@ export default class App extends Component {
                                 <TouchableOpacity style={styles.register_button} onPress={() => this.registerHandle()}>
 
                                     <Text style={styles.register_button_text} >
-                                        Зарегистрироваться
+                                        {/*Зарегистрироваться*/}
+                                        {this.state.language.sign_up}
                                     </Text>
 
                                 </TouchableOpacity>

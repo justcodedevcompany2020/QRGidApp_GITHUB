@@ -117,8 +117,10 @@ export default class App extends React.Component {
     }
 
     logout = () => {
-        this.context.signOut();
-        this.props.navigation.navigate('Dashboard')
+        this.context.signOut(()=>{
+            this.props.navigation.navigate('Dashboard')
+        });
+
     }
 
 

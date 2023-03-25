@@ -47,6 +47,7 @@ import {
     Ubuntu_700Bold_Italic,
 } from '@expo-google-fonts/ubuntu';
 import * as Font from "expo-font";
+import i18n from "i18n-js";
 
 const STATUSBAR_HEIGHT = StatusBar.currentHeight;
 
@@ -59,7 +60,12 @@ export default class App extends Component {
             isLogin: false,
             isLoading: false,
             show_unautorize_modal: false,
-            fontsLoaded: false
+            fontsLoaded: false,
+            open_set_language_popup: false,
+
+            rus_l: false,
+            belarus_l: false,
+            eng_l: false,
 
         };
 
@@ -103,10 +109,16 @@ export default class App extends Component {
         await AsyncStorage.getItem('language',(err,item) => {
 
             let language = item ? JSON.parse(item) : {};
+
+            console.log(language, 'languagelanguagelanguage')
             let set_language = ru;
 
             if (language.hasOwnProperty('language')) {
                 set_language = language.language == 'ru' ? ru : language.language == 'bel' ?  bel : language.language == 'en' ? en : ru;
+            } else {
+                this.setState({
+                    open_set_language_popup: true,
+                })
             }
 
             this.setState({
@@ -193,14 +205,47 @@ export default class App extends Component {
         )
      }
 
+    changeLanguage = async (language) => {
 
+        await this.setState({
+            rus_l: language.rus_l,
+            belarus_l: language.belarus_l,
+            eng_l: language.eng_l
+        })
+
+
+    }
+
+    saveNewLanguage = async () => {
+
+        await this.setState({
+            isLoading: false
+        })
+
+        let {rus_l, belarus_l, eng_l} = this.state;
+        let locale_lng = rus_l ? 'ru' :  belarus_l ? 'bel' : 'en';
+
+        i18n.locale = locale_lng;
+
+        let set_language = locale_lng == 'ru' ? ru : locale_lng == 'bel' ?  bel : en;
+
+        await AsyncStorage.setItem('language', JSON.stringify({language: locale_lng}))
+        await AsyncStorage.removeItem('selected_oblast_and_region');
+
+        await this.setState({
+            isLoading: true,
+            language:set_language,
+            open_set_language_popup:false
+            // isOpenChangeTerrain: true
+        })
+
+    }
 
     render() {
 
         if (!this.state.fontsLoaded) {
             return null;
         }
-
 
         if( !this.state.isLoading ) {
             return(
@@ -223,10 +268,125 @@ export default class App extends Component {
             );
         }
 
+
+
+
+
+        {/*Language popup*/}
+
+
+        {/*open_set_language_popup*/}
+
+
+        {/*Language popup*/}
+
+
         if (Platform.OS === 'ios') {
             return (
 
                 <SafeAreaProvider style={styles.container}>
+
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={this.state.open_set_language_popup}
+                    >
+                        <View
+                            onPress={() => {
+                                // this.setState({
+                                //     open_set_language_popup:false
+                                // })
+                            }}
+                            style={[styles.centeredView, ]}
+                        >
+
+                            <View style={[styles.modalView, {backgroundColor: '#F9F3F1', width: 280, padding: 0}]}>
+
+                               <View style={{width:'100%', borderBottomWidth:1, borderBottomColor:'#EDDAD4', padding:20, flexDirection:'row', justifyContent:'space-between'}}>
+
+                                   <Text style={[styles.modalText, {fontFamily:'FiraSans_400Regular', fontSize: 24}]}>
+                                       {this.state.language.change_app_language2}
+                                   </Text>
+
+                                   <TouchableOpacity
+                                       onPress={() => {
+                                           this.setState({
+                                               open_set_language_popup:false
+                                           })
+                                       }}
+                                   >
+                                       <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                           <Path d="M12 0C8.793 0 5.772 1.241 3.517 3.517 1.241 5.772 0 8.793 0 12c0 3.207 1.241 6.228 3.517 8.483A11.893 11.893 0 0012 24c3.207 0 6.228-1.241 8.483-3.517A11.893 11.893 0 0024 12c0-3.207-1.241-6.228-3.517-8.483C18.228 1.241 15.207 0 12 0zm0 1.241c2.876 0 5.566 1.117 7.614 3.145S22.759 9.124 22.759 12c0 2.876-1.117 5.566-3.145 7.614-2.048 2.027-4.738 3.145-7.614 3.145-2.876 0-5.566-1.117-7.614-3.145S1.241 14.876 1.241 12c0-2.876 1.117-5.566 3.145-7.614S9.124 1.241 12 1.241zM9.22 8.586a.575.575 0 00-.427.187.6.6 0 000 .868L11.131 12l-2.358 2.338a.6.6 0 000 .869c.124.124.29.186.434.186.145 0 .31-.062.434-.186L12 12.869l2.338 2.338c.124.124.29.186.435.186.144 0 .31-.062.434-.186a.6.6 0 000-.869L12.869 12l2.338-2.338a.644.644 0 00.02-.89.6.6 0 00-.868 0L12 11.133l-2.338-2.36a.625.625 0 00-.442-.186z" fill="#393840" />
+                                       </Svg>
+                                   </TouchableOpacity>
+
+                               </View>
+
+                                <View style={{width: '100%', backgroundColor:'transparent', paddingLeft:24}}>
+
+                                    <TouchableOpacity
+                                        style={styles.languageItemWrapper}
+                                        onPress={()=> {
+                                             this.changeLanguage({rus_l: true, belarus_l: false,eng_l: false})
+                                        }}
+                                    >
+                                        <View style={[styles.languageItemCheckBox, !this.state.rus_l ? {borderWidth: 1, borderColor: '#9F9EAE'} :  {borderWidth: 1, borderColor: '#55545F'}]}>
+                                            {this.state.rus_l &&
+                                                <View style={styles.languageItemCheckBoxActive}></View>
+                                            }
+                                        </View>
+                                        <Text  style={[styles.languageItemText, {fontFamily:'FiraSans_400Regular'}]}>Русский</Text>
+                                    </TouchableOpacity>
+
+
+                                    <TouchableOpacity
+                                        style={styles.languageItemWrapper}
+                                        onPress={()=> {
+                                            this.changeLanguage({rus_l: false, belarus_l: true,eng_l: false})
+                                        }}
+                                    >
+                                        <View style={[styles.languageItemCheckBox, !this.state.belarus_l ? {borderWidth: 1, borderColor: '#9F9EAE'} :  {borderWidth: 1, borderColor: '#55545F'}]}>
+                                            {this.state.belarus_l && <View style={styles.languageItemCheckBoxActive}></View>}
+                                        </View>
+                                        <Text  style={[styles.languageItemText, {fontFamily:'FiraSans_400Regular'}]}>Беларуская</Text>
+                                    </TouchableOpacity>
+
+
+                                    <TouchableOpacity
+                                        style={styles.languageItemWrapper}
+                                        onPress={()=> {
+                                            this.changeLanguage({rus_l: false, belarus_l: false,eng_l: true})
+                                        }}
+                                    >
+                                        <View style={[styles.languageItemCheckBox, !this.state.eng_l ? {borderWidth: 1, borderColor: '#9F9EAE'} :  {borderWidth: 1, borderColor: '#55545F'}]}>
+                                            {this.state.eng_l &&  <View style={styles.languageItemCheckBoxActive}></View>}
+                                        </View>
+                                        <Text  style={[styles.languageItemText, {fontFamily:'FiraSans_400Regular'}]}>English</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                <View style={{width:'100%', justifyContent:'flex-end', alignItems:'center', flexDirection:'row',padding:20,borderTopWidth:1, borderTopColor:'#EDDAD4',}}>
+
+                                    <TouchableOpacity
+                                        style={[]}
+                                        onPress={() => {
+                                            this.saveNewLanguage();
+                                        }}
+                                    >
+
+                                        <Text style={[styles.textStyle, {color: '#55545F'}, {fontFamily:'FiraSans_400Regular', fontSize: 14, fontWeight: 'bold',  textTransform: 'uppercase', }]}>
+                                            {/*Сохранить*/}
+                                            {this.state.language.save}
+                                        </Text>
+
+                                    </TouchableOpacity>
+
+                                </View>
+
+                            </View>
+                        </View>
+                    </Modal>
+
 
 
                     {/*custom StatusBar*/}
@@ -235,13 +395,9 @@ export default class App extends Component {
                         </View>
                     {/*custom StatusBar*/}
 
-
-
                     <View style={styles.topBlock}>
 
-
                         {this.state.isLogin ?
-
                             <TouchableOpacity style={ styles.topBlockButton }
                                               onPress={() => this.goToProfile()}
                             >
@@ -261,9 +417,7 @@ export default class App extends Component {
                                     </Svg>
                                 </View>
                             </TouchableOpacity>
-
                             :
-
                             <TouchableOpacity style={ styles.topBlockButton }
                                               onPress={() => this.goToLogin()}
                             >
@@ -284,10 +438,7 @@ export default class App extends Component {
                                     </Svg>
                                 </View>
                             </TouchableOpacity>
-
                         }
-
-
 
                         <View style={styles.centerBlock}>
 
@@ -353,6 +504,7 @@ export default class App extends Component {
                         </View>
 
                     </View>
+
 
                     <Modal
                         animationType="slide"
@@ -424,6 +576,107 @@ export default class App extends Component {
             return (
 
                 <SafeAreaView style={styles.container}>
+
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={this.state.open_set_language_popup}
+                    >
+                        <View
+                            onPress={() => {
+                                // this.setState({
+                                //     open_set_language_popup:false
+                                // })
+                            }}
+                            style={[styles.centeredView, ]}
+                        >
+
+                            <View style={[styles.modalView, {backgroundColor: '#F9F3F1', width: 280, padding: 0}]}>
+
+                                <View style={{width:'100%', borderBottomWidth:1, borderBottomColor:'#EDDAD4', padding:20, flexDirection:'row', justifyContent:'space-between'}}>
+
+                                    <Text style={[styles.modalText, {fontFamily:'FiraSans_400Regular', fontSize: 24}]}>
+                                        {this.state.language.change_app_language2}
+                                    </Text>
+
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            this.setState({
+                                                open_set_language_popup:false
+                                            })
+                                        }}
+                                    >
+                                        <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <Path d="M12 0C8.793 0 5.772 1.241 3.517 3.517 1.241 5.772 0 8.793 0 12c0 3.207 1.241 6.228 3.517 8.483A11.893 11.893 0 0012 24c3.207 0 6.228-1.241 8.483-3.517A11.893 11.893 0 0024 12c0-3.207-1.241-6.228-3.517-8.483C18.228 1.241 15.207 0 12 0zm0 1.241c2.876 0 5.566 1.117 7.614 3.145S22.759 9.124 22.759 12c0 2.876-1.117 5.566-3.145 7.614-2.048 2.027-4.738 3.145-7.614 3.145-2.876 0-5.566-1.117-7.614-3.145S1.241 14.876 1.241 12c0-2.876 1.117-5.566 3.145-7.614S9.124 1.241 12 1.241zM9.22 8.586a.575.575 0 00-.427.187.6.6 0 000 .868L11.131 12l-2.358 2.338a.6.6 0 000 .869c.124.124.29.186.434.186.145 0 .31-.062.434-.186L12 12.869l2.338 2.338c.124.124.29.186.435.186.144 0 .31-.062.434-.186a.6.6 0 000-.869L12.869 12l2.338-2.338a.644.644 0 00.02-.89.6.6 0 00-.868 0L12 11.133l-2.338-2.36a.625.625 0 00-.442-.186z" fill="#393840" />
+                                        </Svg>
+                                    </TouchableOpacity>
+
+                                </View>
+
+                                <View style={{width: '100%', backgroundColor:'transparent', paddingLeft:24}}>
+
+                                    <TouchableOpacity
+                                        style={styles.languageItemWrapper}
+                                        onPress={()=> {
+                                            this.changeLanguage({rus_l: true, belarus_l: false,eng_l: false})
+                                        }}
+                                    >
+                                        <View style={[styles.languageItemCheckBox, !this.state.rus_l ? {borderWidth: 1, borderColor: '#9F9EAE'} :  {borderWidth: 1, borderColor: '#55545F'}]}>
+                                            {this.state.rus_l &&
+                                                <View style={styles.languageItemCheckBoxActive}></View>
+                                            }
+                                        </View>
+                                        <Text  style={[styles.languageItemText, {fontFamily:'FiraSans_400Regular'}]}>Русский</Text>
+                                    </TouchableOpacity>
+
+
+                                    <TouchableOpacity
+                                        style={styles.languageItemWrapper}
+                                        onPress={()=> {
+                                            this.changeLanguage({rus_l: false, belarus_l: true,eng_l: false})
+                                        }}
+                                    >
+                                        <View style={[styles.languageItemCheckBox, !this.state.belarus_l ? {borderWidth: 1, borderColor: '#9F9EAE'} :  {borderWidth: 1, borderColor: '#55545F'}]}>
+                                            {this.state.belarus_l && <View style={styles.languageItemCheckBoxActive}></View>}
+                                        </View>
+                                        <Text  style={[styles.languageItemText, {fontFamily:'FiraSans_400Regular'}]}>Беларуская</Text>
+                                    </TouchableOpacity>
+
+
+                                    <TouchableOpacity
+                                        style={styles.languageItemWrapper}
+                                        onPress={()=> {
+                                            this.changeLanguage({rus_l: false, belarus_l: false,eng_l: true})
+                                        }}
+                                    >
+                                        <View style={[styles.languageItemCheckBox, !this.state.eng_l ? {borderWidth: 1, borderColor: '#9F9EAE'} :  {borderWidth: 1, borderColor: '#55545F'}]}>
+                                            {this.state.eng_l &&  <View style={styles.languageItemCheckBoxActive}></View>}
+                                        </View>
+                                        <Text  style={[styles.languageItemText, {fontFamily:'FiraSans_400Regular'}]}>English</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                <View style={{width:'100%', justifyContent:'flex-end', alignItems:'center', flexDirection:'row',padding:20,borderTopWidth:1, borderTopColor:'#EDDAD4',}}>
+
+                                    <TouchableOpacity
+                                        style={[]}
+                                        onPress={() => {
+                                            this.saveNewLanguage();
+                                        }}
+                                    >
+
+                                        <Text style={[styles.textStyle, {color: '#55545F'}, {fontFamily:'FiraSans_400Regular', fontSize: 14, fontWeight: 'bold',  textTransform: 'uppercase', }]}>
+                                            {/*Сохранить*/}
+                                            {this.state.language.save}
+                                        </Text>
+
+                                    </TouchableOpacity>
+
+                                </View>
+
+                            </View>
+                        </View>
+                    </Modal>
 
                     <View style={styles.topBlock}>
 
@@ -787,6 +1040,32 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize:14
     },
-
+    languageItemWrapper:{
+        width:'100%',
+        flexDirection:'row',
+        alignItems:'center',
+        // marginBottom: 36,
+        marginVertical: 14
+    },
+    languageItemCheckBox:{
+        width:20,
+        height:20,
+        borderRadius: 50,
+        // borderWidth:1,
+        // borderColor: '#9F9EAE',
+        marginRight: 32,
+        alignItems:'center',
+        justifyContent:'center'
+    },
+    languageItemCheckBoxActive:{
+        width:12,
+        height:12,
+        backgroundColor: '#55545F',
+        borderRadius: 50,
+    },
+    languageItemText:{
+        color:'#1D1D20',
+        fontSize:16
+    },
 
 });

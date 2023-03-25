@@ -196,7 +196,7 @@ export default function App() {
       try {
         await AsyncStorage.setItem('userToken', userToken);
         await AsyncStorage.setItem('userId', userId);
-        await AsyncStorage.setItem('language', JSON.stringify({language: 'ru'}));
+        // await AsyncStorage.setItem('language', JSON.stringify({language: 'ru'}));
 
         await AsyncStorage.setItem('userEmail', userEmail);
         await AsyncStorage.setItem('userPassword', userPassword);
@@ -207,11 +207,11 @@ export default function App() {
       dispatch({ type: 'LOGIN', email: userEmail, token: userToken, userId:userId  });
         callback()
     },
-    signOut: async() => {
+    signOut: async(callback) => {
       try {
         await AsyncStorage.removeItem('userToken');
         await AsyncStorage.removeItem('userId');
-        await AsyncStorage.removeItem('language');
+        // await AsyncStorage.removeItem('language');
 
         setIsLoading(false);
 
@@ -219,6 +219,7 @@ export default function App() {
         console.log(e);
       }
       dispatch({ type: 'LOGOUT' });
+        callback()
     },
     getToken: async() => {
       try {

@@ -88,8 +88,9 @@ export default class App extends React.Component {
     goToObjectMap = () => {
         this.props.navigation.navigate('ObjectMap')
     }
-    closeChangeTerrain  = async () => {
-        console.log('changed')
+    closeChangeTerrain  = async () =>
+    {
+        console.log('changed');
         await this.setState({
             isOpenChangeTerrain: false
         })
@@ -220,8 +221,10 @@ export default class App extends React.Component {
         await this.setState({
             isLoading: true,
             language:set_language,
-            isOpenChangeTerrain: true
+            // isOpenChangeTerrain: true
         })
+
+        this.goToObjectsMap()
 
     }
 

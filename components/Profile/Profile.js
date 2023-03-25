@@ -62,8 +62,8 @@ const windowHeight = Dimensions.get('window').height;
 // import DropDownPicker from 'react-native-dropdown-picker';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as Font from "expo-font";
-import RemoveAccount from '../../assets/deleteSvg';
-import CloseSvg from '../../assets/closeSvg';
+import RemoveAccount from '../../assets/svg/deleteSvg';
+import CloseSvg from '../../assets/svg/closeSvg';
 import {
     useFonts,
     Ubuntu_300Light,
@@ -211,7 +211,7 @@ export default class App extends React.Component {
         this.setState({
             isOpenChangeTerrain: false
         })
-
+        this.props.navigation.navigate('ObjectMap')
     }
 
     openEditModal() {
@@ -271,8 +271,9 @@ export default class App extends React.Component {
 
     logout = () => {
 
-        this.context.signOut();
-        this.props.navigation.navigate('Dashboard')
+        this.context.signOut(()=>{
+            this.props.navigation.navigate('Dashboard')
+        });
     }
 
 
@@ -1174,7 +1175,7 @@ export default class App extends React.Component {
                         // }
 
 
-                    }).done();
+                    })
             } else {
 
                 this.setState({
@@ -1365,6 +1366,40 @@ export default class App extends React.Component {
             })
         }, 5000)
     }
+
+
+
+    checkUserAuthStatusInBackEnd = async () =>
+    {
+        fetch(
+            'https://qr-gid.by/api/auth/status/',
+            {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            }
+        ).then((response) => response.json())
+            .catch((error) => {
+                console.log("ERROR " , error)
+            })
+            .then((response) =>
+            {
+                if (response.success === true)
+                {
+                    this.setState({
+                        remove_account_modal: true
+                    });
+                } else {
+                    this.context.signOut(()=>{
+                        this.props.navigation.navigate('Login')
+                    });
+                }
+
+            })
+
+    }
+
 
     render() {
 
@@ -2899,9 +2934,9 @@ export default class App extends React.Component {
                         <TouchableOpacity
                             style={[styles.remove_account_button ]}
                             onPress={() => {
-                                this.setState({
-                                    remove_account_modal: true
-                                })
+
+                                this.checkUserAuthStatusInBackEnd()
+
                             }}
                         >
                             <RemoveAccount/>

@@ -84,7 +84,7 @@ export default class App extends React.Component {
         this.setState({
             isOpenChangeTerrain: false
         })
-
+        this.props.navigation.navigate('ObjectMap')
     }
     onMapLayout = () => {
         this.setState({ isMapReady: true });
