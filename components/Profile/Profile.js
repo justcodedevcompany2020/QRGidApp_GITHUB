@@ -24,8 +24,7 @@ const { StatusBarManager } = NativeModules;
 
 // StatusBar.setHidden(true);
 
-
-
+import {sendEncryptData} from '../helpers'
 
 import { Shadow } from 'react-native-shadow-2';
 import DatePicker from 'react-native-datepicker';
@@ -76,6 +75,7 @@ import {
     Ubuntu_700Bold_Italic,
 } from '@expo-google-fonts/ubuntu';
 import {FiraSans_400Regular, FiraSans_500Medium} from "@expo-google-fonts/fira-sans";
+import * as Location from "expo-location";
 
 export default class App extends React.Component {
 
@@ -191,7 +191,8 @@ export default class App extends React.Component {
             remove_account_modal: false,
             remove_account_last_modal: false,
 
-            cancel_remove_account: false
+            cancel_remove_account: false,
+            ipAddress: null
         }
 
         this.handler = this.handler.bind(this)
@@ -222,13 +223,6 @@ export default class App extends React.Component {
 
 
                 let data = response.data;
-                // console.log(data , 'response')
-
-                //
-                // if (language_name == 'ru' || language_name == 'bel') {
-                //
-                // }
-                // console.log(response.data, userId, 'checkUserInfo')
                 let contries = []
 
                 for (const contry in data) {
@@ -796,89 +790,190 @@ export default class App extends React.Component {
         })
     }
 
+
     checkUserInfo = async () => {
 
-            let userId = await AsyncStorage.getItem('userId');
-            await  this.setState({
-                IsLoadedUserInfo: false
-            })
-            axios.get('https://qr-gid.by/api/auth/profile?ID='+userId).then(
-                (response) => {
+        let userId = await AsyncStorage.getItem('userId');
+        let _this = this;
+        await  this.setState({
+            IsLoadedUserInfo: false
+        })
 
-                    let data = response.data;
+        sendEncryptData(`https://qr-gid.by/api/auth/profile?ID=${userId}`, '', function (response, encrypte_response){
 
-                    console.log(response.data, userId, 'checkUserInfo')
+            let data = encrypte_response;
 
-                    if (data.hasOwnProperty('EMAIL') && data.hasOwnProperty('CITY')) {
+            console.log(encrypte_response, userId, 'checkUserInfo')
 
-                        console.log(response.data, 'response')
+            if (data.hasOwnProperty('EMAIL') && data.hasOwnProperty('CITY')) {
 
-                        this.setState({
-                            edit_login_valid: data.LOGIN ? true  : false,
-                            edit_fio_valid: data.NAME ? true  : false,
-                            edit_phone_valid: data.PHONE ? true  : false,
-                            edit_email_valid: data.EMAIL ? true  : false,
-                            edit_country_valid: data.COUNTRY ? true  : false,
-                            edit_city_valid: data.CITY ? true  : false,
-                            edit_birth_valid: data.BIRTHDAY ? true  : false,
+                _this.setState({
+                    edit_login_valid: data.LOGIN ? true  : false,
+                    edit_fio_valid: data.NAME ? true  : false,
+                    edit_phone_valid: data.PHONE ? true  : false,
+                    edit_email_valid: data.EMAIL ? true  : false,
+                    edit_country_valid: data.COUNTRY ? true  : false,
+                    edit_city_valid: data.CITY ? true  : false,
+                    edit_birth_valid: data.BIRTHDAY ? true  : false,
+                })
+
+                _this.setState({
+                    AGE:data.AGE,
+                    edit_birth:data.BIRTHDAY,
+                    CITY:data.CITY,
+                    COUNTRY:data.COUNTRY,
+                    EMAIL:data.EMAIL,
+                    GENDER:data.GENDER,
+                    LOGIN:data.LOGIN,
+                    NAME:data.NAME,
+                    PHONE:data.PHONE,
+                    PHOTO:data.PHOTO,
+                    edit_login: data.LOGIN,
+                    edit_fio: data.NAME,
+                    edit_phone: data.PHONE,
+                    edit_phone_masked: data.PHONE,
+                    edit_email: data.EMAIL,
+                    edit_country: data.COUNTRY,
+                    edit_city: data.CITY
+                })
+
+                if (data.GENDER !== null) {
+                    console.log('GENDER null')
+
+                    if (data.GENDER == 'Женщина' || data.GENDER == 'Жанчына' || data.GENDER == 'Woman' ){
+
+                        _this.setState({
+                            sex_woman: true,
+                            sex_man: false,
+                            GENDER: _this.state.language.woman
                         })
 
+                    } else if(data.GENDER == 'Мужчина' || data.GENDER == 'Мужчына' || data.GENDER == 'Man' ) {
                         this.setState({
-                            AGE:data.AGE,
-                            edit_birth:data.BIRTHDAY,
-                            CITY:data.CITY,
-                            COUNTRY:data.COUNTRY,
-                            EMAIL:data.EMAIL,
-                            GENDER:data.GENDER,
-                            LOGIN:data.LOGIN,
-                            NAME:data.NAME,
-                            PHONE:data.PHONE,
-                            PHOTO:data.PHOTO,
-                            edit_login: data.LOGIN,
-                            edit_fio: data.NAME,
-                            edit_phone: data.PHONE,
-                            edit_phone_masked: data.PHONE,
-                            edit_email: data.EMAIL,
-                            edit_country: data.COUNTRY,
-                            edit_city: data.CITY
-                        })
-
-                        if (data.GENDER !== null) {
-                            console.log('GENDER null')
-                            if (data.GENDER == 'Женщина' || data.GENDER == 'Жанчына' || data.GENDER == 'Woman' ){
-
-                                this.setState({
-                                    sex_woman: true,
-                                    sex_man: false,
-                                    GENDER: this.state.language.woman
-                                })
-
-
-                            } else if(data.GENDER == 'Мужчина' || data.GENDER == 'Мужчына' || data.GENDER == 'Man' ) {
-                                this.setState({
-                                    sex_woman: false,
-                                    sex_man: true,
-                                    GENDER: this.state.language.man
-                                })
-                            }
-                        }
-
-
-
-                        this.setState({
-                            IsLoadedUserInfo: true
+                            sex_woman: false,
+                            sex_man: true,
+                            GENDER: _this.state.language.man
                         })
                     }
+                }
 
-                },
+                _this.setState({
+                    IsLoadedUserInfo: true
+                })
+            }
 
-                (err) => {
-                    console.log(err.response.data, 'err')
-                },
 
-            );
+        })
+
+            // axios.post('https://qr-gid.by/api/auth/profile?ID='+userId).then(
+            //     (response) => {
+            //
+            //         let data = response.data;
+            //
+            //         console.log(response.data, userId, 'checkUserInfo')
+            //
+            //         if (data.hasOwnProperty('EMAIL') && data.hasOwnProperty('CITY')) {
+            //
+            //             console.log(response.data, 'response')
+            //
+            //             this.setState({
+            //                 edit_login_valid: data.LOGIN ? true  : false,
+            //                 edit_fio_valid: data.NAME ? true  : false,
+            //                 edit_phone_valid: data.PHONE ? true  : false,
+            //                 edit_email_valid: data.EMAIL ? true  : false,
+            //                 edit_country_valid: data.COUNTRY ? true  : false,
+            //                 edit_city_valid: data.CITY ? true  : false,
+            //                 edit_birth_valid: data.BIRTHDAY ? true  : false,
+            //             })
+            //
+            //             this.setState({
+            //                 AGE:data.AGE,
+            //                 edit_birth:data.BIRTHDAY,
+            //                 CITY:data.CITY,
+            //                 COUNTRY:data.COUNTRY,
+            //                 EMAIL:data.EMAIL,
+            //                 GENDER:data.GENDER,
+            //                 LOGIN:data.LOGIN,
+            //                 NAME:data.NAME,
+            //                 PHONE:data.PHONE,
+            //                 PHOTO:data.PHOTO,
+            //                 edit_login: data.LOGIN,
+            //                 edit_fio: data.NAME,
+            //                 edit_phone: data.PHONE,
+            //                 edit_phone_masked: data.PHONE,
+            //                 edit_email: data.EMAIL,
+            //                 edit_country: data.COUNTRY,
+            //                 edit_city: data.CITY
+            //             })
+            //
+            //             if (data.GENDER !== null) {
+            //                 console.log('GENDER null')
+            //                 if (data.GENDER == 'Женщина' || data.GENDER == 'Жанчына' || data.GENDER == 'Woman' ){
+            //
+            //                     this.setState({
+            //                         sex_woman: true,
+            //                         sex_man: false,
+            //                         GENDER: this.state.language.woman
+            //                     })
+            //
+            //
+            //                 } else if(data.GENDER == 'Мужчина' || data.GENDER == 'Мужчына' || data.GENDER == 'Man' ) {
+            //                     this.setState({
+            //                         sex_woman: false,
+            //                         sex_man: true,
+            //                         GENDER: this.state.language.man
+            //                     })
+            //                 }
+            //             }
+            //
+            //
+            //
+            //             this.setState({
+            //                 IsLoadedUserInfo: true
+            //             })
+            //         }
+            //
+            //     },
+            //
+            //     (err) => {
+            //         console.log(err.response.data, 'err')
+            //     },
+            //
+            // );
 
     }
+
+
+    sysEvents = async (sys_request_detail,request_status, callback) => {
+
+        let { status } = await Location.requestForegroundPermissionsAsync();
+
+        console.log(status, 'status');
+
+        let location = null;
+        if (status !== 'granted') {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+        } else {
+            location = await Location.getCurrentPositionAsync({});
+        }
+        let user_id = await AsyncStorage.getItem('userId');
+
+        let req_for_history = {
+            request_detail: sys_request_detail,
+            gps_user: location ?  location.coords.latitude + ',' + location.coords.longitude : '',
+            ip_user:this.state.ipAddress,
+            id_user: user_id,
+            request_status: request_status
+        }
+        console.log(req_for_history, 'req_for_history')
+        axios.post('https://qr-gid.by/api/sys_events/',req_for_history).then((response) => {
+
+            // console.log(response, 'sys_events RESPONSE')
+            callback()
+        });
+
+    }
+
 
     saveEditInfo = async () => {
 
@@ -886,8 +981,9 @@ export default class App extends React.Component {
         let find = '-';
         let re = new RegExp(find, 'g');
         let BIRTHDAY = this.state.edit_birth  != '' ? this.state.edit_birth.replace(re,'.') : null
+        let _this = this;
 
-        const req = {
+        let req = {
             ID: userId,
             LOGIN: this.state.edit_login,
             NAME: this.state.edit_fio,
@@ -898,10 +994,6 @@ export default class App extends React.Component {
             CITY: this.state.edit_city,
             BIRTHDAY: BIRTHDAY
         };
-
-        console.log(req, 'rq')
-
-
 
         if (this.state.sex_woman === false && this.state.sex_man === false) {
             req.GENDER = null
@@ -926,89 +1018,168 @@ export default class App extends React.Component {
             req.CITY = this.state.edit_city;
         }
 
+        let sys_request_detail = JSON.stringify({
+            url: 'https://qr-gid.by/api/auth/profile/edit.php',
+            data: req
+        })
+
+
+
+        sendEncryptData('https://qr-gid.by/api/auth/profile/edit.php', req, async function (response, encrypte_response) {
+
+            let data = encrypte_response;
+
+            if (data.TYPE == 'ERROR') {
+
+                if (data.MESSAGE.hasOwnProperty('pass'))
+                {
+                    _this.setState({
+                        edit_form_password_error: true,
+                        edit_form_password_valid: false,
+                        edit_form_password_error_text: data.MESSAGE.pass
+                    })
+                }
+
+                if (data.MESSAGE.hasOwnProperty('email'))
+                {
+                    _this.setState({
+                        edit_email_error: true,
+                        edit_email_valid: false,
+                        edit_email_error_text: data.MESSAGE.email
+                    })
+                }
+
+                if (data.MESSAGE.hasOwnProperty('phone'))
+                {
+                    _this.setState({
+                        edit_phone_error: true,
+                        edit_phone_valid: false
+                    })
+                }
+
+                if (data.MESSAGE.hasOwnProperty('login'))
+                {
+                    _this.setState({
+                        edit_login_error: true,
+                        edit_login_valid: false,
+                        edit_login_error_text: data.MESSAGE.login
+                    })
+                }
+
+                if (data.MESSAGE.hasOwnProperty('phone'))
+                {
+                    _this.setState({
+                        edit_phone_error: true,
+                        edit_phone_valid: false,
+                        edit_phone_error_text: data.MESSAGE.phone
+                    })
+                }
+
+                _this.sysEvents(sys_request_detail, true, function () {
+
+                })
+
+            } else if(data.TYPE == 'OK') {
+
+                _this.checkUserInfo();
+                _this.setState({
+                    isOpenEditModal:false,
+                    edit_form_password: '',
+                    edit_form_password_valid: false,
+                    edit_form_password_error: false
+                })
+                _this.sysEvents(sys_request_detail, false, function () {
+
+                })
+            }
+
+
+        });
 
         console.log(req, 'reqreqreq')
 
-        axios.post('https://qr-gid.by/api/auth/profile/edit.php', req).then(
-            (response) => {
-
-                let data = response.data;
-                console.log(data, 'edit data ekac')
-
-                if (data.TYPE == 'ERROR') {
-
-                    if (data.MESSAGE.hasOwnProperty('pass')) {
-                        this.setState({
-                            edit_form_password_error: true,
-                            edit_form_password_valid: false,
-                            edit_form_password_error_text:data.MESSAGE.pass
-                        })
-                    }
-
-                    if (data.MESSAGE.hasOwnProperty('email')) {
-
-                        this.setState({
-                            edit_email_error: true,
-                            edit_email_valid: false,
-                            edit_email_error_text: data.MESSAGE.email
-                        })
-
-                    }
-
-                    if (data.MESSAGE.hasOwnProperty('phone')) {
-
-                        this.setState({
-                            edit_phone_error: true,
-                            edit_phone_valid: false
-                        })
-
-                    }
-
-                    if (data.MESSAGE.hasOwnProperty('login')) {
-
-                        this.setState({
-                            edit_login_error: true,
-                            edit_login_valid: false,
-                            edit_login_error_text: data.MESSAGE.login
-                        })
-
-                    }
-
-                    if (data.MESSAGE.hasOwnProperty('phone')) {
-
-                        this.setState({
-                            edit_phone_error: true,
-                            edit_phone_valid: false,
-                            edit_phone_error_text: data.MESSAGE.phone
-                        })
-
-                    }
-
-                } else if(data.TYPE == 'OK') {
-
-                    this.checkUserInfo();
-
-                    this.setState({
-                        isOpenEditModal:false,
-                        edit_form_password: '',
-                        edit_form_password_valid: false,
-                        edit_form_password_error: false
-                    })
-
-                }
-
-                // edit_login_error: false,
-                // edit_fio_error: false,
-                // edit_phone_error: false,
-                // edit_email_error: false,
-
-            },
-
-            (err) => {
-                console.log(err.response.data, 'err');
-            },
-
-        );
+        // axios.post('https://qr-gid.by/api/auth/profile/edit.php', req).then(
+        //     (response) => {
+        //
+        //         let data = response.data;
+        //         console.log(data, 'edit data ekac')
+        //
+        //         if (data.TYPE == 'ERROR') {
+        //
+        //             if (data.MESSAGE.hasOwnProperty('pass')) {
+        //                 this.setState({
+        //                     edit_form_password_error: true,
+        //                     edit_form_password_valid: false,
+        //                     edit_form_password_error_text: data.MESSAGE.pass
+        //                 })
+        //             }
+        //
+        //             if (data.MESSAGE.hasOwnProperty('email')) {
+        //
+        //                 this.setState({
+        //                     edit_email_error: true,
+        //                     edit_email_valid: false,
+        //                     edit_email_error_text: data.MESSAGE.email
+        //                 })
+        //
+        //             }
+        //
+        //             if (data.MESSAGE.hasOwnProperty('phone')) {
+        //
+        //                 this.setState({
+        //                     edit_phone_error: true,
+        //                     edit_phone_valid: false
+        //                 })
+        //
+        //             }
+        //
+        //             if (data.MESSAGE.hasOwnProperty('login')) {
+        //
+        //                 this.setState({
+        //                     edit_login_error: true,
+        //                     edit_login_valid: false,
+        //                     edit_login_error_text: data.MESSAGE.login
+        //                 })
+        //
+        //             }
+        //
+        //             if (data.MESSAGE.hasOwnProperty('phone')) {
+        //
+        //                 this.setState({
+        //                     edit_phone_error: true,
+        //                     edit_phone_valid: false,
+        //                     edit_phone_error_text: data.MESSAGE.phone
+        //                 })
+        //
+        //             }
+        //
+        //             this.sysEvents(sys_request_detail, true, function () {
+        //
+        //             })
+        //
+        //         } else if(data.TYPE == 'OK') {
+        //
+        //             this.checkUserInfo();
+        //
+        //             this.setState({
+        //                 isOpenEditModal:false,
+        //                 edit_form_password: '',
+        //                 edit_form_password_valid: false,
+        //                 edit_form_password_error: false
+        //             })
+        //
+        //             this.sysEvents(sys_request_detail, false, function () {
+        //
+        //             })
+        //         }
+        //
+        //     },
+        //
+        //     (err) => {
+        //         console.log(err.response.data, 'err');
+        //     },
+        //
+        // );
 
     }
 
@@ -1020,8 +1191,13 @@ export default class App extends React.Component {
                 OLD: this.state.edit_old_password,
                 PASS: this.state.edit_new_password,
                 CONFIRM: this.state.edit_confirm_new_password,
-
             };
+
+
+            let sys_request_detail = JSON.stringify({
+                url: 'https://qr-gid.by/api/auth/changePass/',
+                data: req
+            })
 
             axios.post('https://qr-gid.by/api/auth/changePass/', req).then(
                 (response) => {
@@ -1057,6 +1233,11 @@ export default class App extends React.Component {
                             })
                         }
 
+
+                        this.sysEvents(sys_request_detail, true, function () {
+
+                        })
+
                     }
 
                     else if (data.TYPE == 'OK') {
@@ -1071,10 +1252,12 @@ export default class App extends React.Component {
                             edit_confirm_new_password_valid: false
                         })
 
+                        this.sysEvents(sys_request_detail, false, function () {
+
+                        })
                     }
 
-
-                        console.log(data, 'data')
+                    console.log(data, 'data')
 
                 },
 
@@ -1270,16 +1453,22 @@ export default class App extends React.Component {
 
 
     componentDidMount() {
-
         const { navigation } = this.props;
-
         this.setLanguageFromStorage();
         this.closeAllModals();
         this.checkUserInfo();
-
         this.loadFonts();
 
         this.focusListener = navigation.addListener("focus", () => {
+
+            axios.get('https://api.ipify.org?format=json')
+                .then(response => {
+                    this.setState({
+                        ipAddress: response.data.ip
+                    })
+                    console.log(response.data, 'response.data')
+                })
+                .catch(error => console.log(error));
 
             this.setLanguageFromStorage();
             this.closeAllModals();
@@ -1541,11 +1730,9 @@ export default class App extends React.Component {
                                             >
 
                                                 <View style={[styles.languageItemCheckBox, !this.state.sex_man ? {borderWidth: 1, borderColor: '#9F9EAE'} :  {borderWidth: 1, borderColor: '#55545F'}]}>
-
                                                     {this.state.sex_man &&
                                                         <View style={styles.languageItemCheckBoxActive}></View>
                                                     }
-
                                                 </View>
 
                                                 <Text  style={[styles.languageItemText,{fontFamily: 'FiraSans_400Regular'}]}>
@@ -1636,11 +1823,9 @@ export default class App extends React.Component {
                                                         })
                                                     }}
                                                 >
-
                                                     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                         <Path d="M2 7.5V19a4 4 0 004 4h12a4 4 0 004-4V7.5m-20 0v0A3.5 3.5 0 015.5 4h1M2 7.5h20m0 0v0A3.5 3.5 0 0018.5 4h-1m-11 0V.5m0 3.5h11m0 0V.5" stroke="#9F9EAE" strokeLinecap="round"/>
                                                     </Svg>
-
                                                 </TouchableOpacity>
                                                 {/*openEditBirth*/}
 
@@ -2160,10 +2345,8 @@ export default class App extends React.Component {
                                                 {this.state.edit_phone_error_text}
                                             </Text>
                                             :
-
                                             (
                                                 !this.state.edit_phone_valid &&
-
                                                 <Text style={[styles.inp_buttom_label, {fontFamily: 'FiraSans_400Regular'}]}>
                                                     {/*Введите телефон в формате */}
                                                     {this.state.language.choose_phone} +375 (__) ___-__-__
@@ -2892,14 +3075,9 @@ export default class App extends React.Component {
 
                                     <View style={styles.editProfileButtonWrapper}>
                                         <TouchableOpacity style={styles.editProfileButton} onPress={() => this.openEditModal()}>
-
                                             <Text style={{fontFamily: 'FiraSans_400Regular', fontSize: 14}}>
-
                                                 {this.state.language.edit_profile}
-
-
                                             </Text>
-
                                         </TouchableOpacity>
                                     </View>
 

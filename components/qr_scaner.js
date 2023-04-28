@@ -81,10 +81,6 @@ export default function App(props) {
 
     useEffect(() => {
 
-
-
-
-
         axios.get('https://api.ipify.org?format=json')
             .then(response => {
                 setIpAddress(response.data.ip)

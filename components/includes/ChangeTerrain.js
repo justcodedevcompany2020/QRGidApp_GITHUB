@@ -91,6 +91,7 @@ export default class App extends React.Component {
         axios.get(url).then(
             (response) => {
 
+                console.log(response.data, 'getRegions')
                 let response_data = response.data;
 
                  this.setState({
@@ -195,6 +196,7 @@ export default class App extends React.Component {
             region_gps: region_gps,
         }
 
+         console.log(selected_oblast_and_region, 'changeTerrain')
         await AsyncStorage.setItem('selected_oblast_and_region', JSON.stringify(selected_oblast_and_region) )
         this.closeChangeTerrain()
 

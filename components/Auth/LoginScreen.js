@@ -29,6 +29,7 @@ import MaskInput from 'react-native-mask-input';
 import CryptoES from "crypto-es";
 
 // react-native-text-input-mask
+import {sendEncryptData} from '../helpers'
 
 import { TextInput, HelperText } from 'react-native-paper';
 
@@ -50,6 +51,10 @@ import {
     initialWindowMetrics,
 } from 'react-native-safe-area-context';
 import CryptoJS from "crypto-js";
+import * as Location from "expo-location";
+// import { getRandomBytes } from 'react-native-get-random-values';
+
+import 'react-native-get-random-values'
 
 
 i18n.fallbacks = true;
@@ -139,7 +144,8 @@ export default class App extends Component {
 
             show_politic_modal: false,
             show_politic_text_modal: false,
-            politic_text: ''
+            politic_text: '',
+            ipAddress: null
         };
 
     }
@@ -220,75 +226,36 @@ export default class App extends Component {
     }
 
 
-    loginHandle  = async () => {
-        let userId = await AsyncStorage.getItem('userId');
+    sysEvents = async (sys_request_detail,request_status, callback) => {
 
-        let login = this.state.login;
-        let password = this.state.password;
+        let { status } = await Location.requestForegroundPermissionsAsync();
 
-        const req = {
-            login: login,
-            pass: password,
-        };
+        console.log(status, 'status');
 
-        axios.post('https://qr-gid.by/api/auth/login/', req).then(
-            (response) => {
-                if(response.data.hasOwnProperty('TYPE') ) {
+        let location = null;
+        if (status !== 'granted') {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+        } else {
+            location = await Location.getCurrentPositionAsync({});
+        }
 
-                    if (response.data.TYPE == 'ERROR') {
-                        this.setState({
-                            login_error: true,
-                            login_valid:false,
-                            password_error: true,
-                            password_valid:false,
-                        })
+        let req_for_history = {
+            request_detail: sys_request_detail,
+            gps_user: location ?  location.coords.latitude + ',' + location.coords.longitude : '',
+            ip_user:this.state.ipAddress,
+            id_user: '',
+            request_status: request_status
+        }
+        console.log(req_for_history, 'req_for_history')
+        axios.post('https://qr-gid.by/api/sys_events/',req_for_history).then((response) => {
 
-                    }
-
-                } else {
-
-                    Keyboard.dismiss()
-
-                    this.setState({
-                        login_error: false,
-                        login_valid:false,
-                        password_error: false,
-                        password_valid:false,
-                        login: '',
-                        password: ''
-                    })
-
-                    let userToken = response.headers['set-cookie'];
-                    let userId    = response.data.ID;
-
-                    let foundUser = {
-                        token: userToken,
-                        userId: userId,
-                        // language: 'ru',
-                        email: login,
-                        password: password
-
-                    }
-
-                    let navigate = this.props.navigation;
-                    this.context.signIn(foundUser, function () {
-                        navigate.navigate('Profile')
-                    });
-
-                }
-
-            },
-
-            (err) => {
-                console.log(err.response.data, 'err')
-            },
-
-        );
-
-
-
+            // console.log(response, 'sys_events RESPONSE')
+            callback()
+        });
 
     }
+
+
 
 
     clearRegisterForm = async () => {
@@ -339,12 +306,13 @@ export default class App extends Component {
 
         let login = this.state.reg_login
         let name  = this.state.reg_fio
-
         let phone  = this.state.reg_phone
         let email  = this.state.reg_email.replace(/\s/g, '')
         let pass  = this.state.reg_password
         let passConfirm  = this.state.reg_confirm_password
         let registerPolicy  = this.state.registerPolicy
+        let navigate = this.props.navigation;
+        let _this = this;
 
         const req = {
             login:login,
@@ -354,6 +322,11 @@ export default class App extends Component {
             pass:pass,
             passConfirm:passConfirm,
         };
+
+        let sys_request_detail = JSON.stringify({
+            url: 'https://qr-gid.by/api/auth/profile/edit.php',
+            data: req
+        })
 
 
         // if (!registerPolicy) {
@@ -368,134 +341,261 @@ export default class App extends Component {
         //     })
         // }
 
-        axios.post('https://qr-gid.by/api/auth/register/', req).then(
-           async (response)  => {
 
-                console.log(response.data, 'register response')
 
-                if(response.data.TYPE == "OK") {
+        //
+        // sendEncryptData('https://qr-gid.by/api/auth/login/', req, function (encrypte_response){
+        //     console.log( encrypte_response, 'encrypte_response')
+        // })
 
-                    let userToken = response.headers['set-cookie'];
-                    let userId = response.data.ID;
 
-                    // clear register form data
+        sendEncryptData('https://qr-gid.by/api/auth/register/', req, async function (response, encrypte_response) {
 
-                    await this.clearRegisterForm();
+            console.log(encrypte_response, 'encrypte_response')
 
-                    let foundUser = {
-                        token: userToken,
-                        userId:userId,
-                        // language: 'ru',
-                        email: login,
-                        password: pass
-                    }
+            if(encrypte_response.TYPE == "OK")
+            {
+                let userToken = response.headers['set-cookie'];
+                let userId    = encrypte_response.ID;
 
-                    let navigate = this.props.navigation;
-                    this.context.signIn(foundUser, function () {
+                await _this.clearRegisterForm();
+
+                let foundUser = {
+                    token: userToken,
+                    userId:userId,
+                    // language: 'ru',
+                    email: login,
+                    password: pass
+                }
+
+                _this.sysEvents(sys_request_detail, false, function () {
+                    _this.context.signIn(foundUser, function () {
                         navigate.navigate('Profile')
                     });
+                })
 
-                    return false;
+                return false;
 
-                } else if (response.data.TYPE == 'Error') {
+            } else if (encrypte_response.TYPE == 'Error') {
 
-                    if(response.data.MESSAGE.hasOwnProperty('email')) {
+                if(encrypte_response.MESSAGE.hasOwnProperty('email')) {
 
-                        let error = '';
+                    let error = '';
 
-                        if(response.data.MESSAGE.email == 'Введите почту') {
-                            error = this.state.language.reg_email_error_text1
-                        } else if(response.data.MESSAGE.email == 'Почта введена не верно') {
-                            error = this.state.language.reg_email_error_text2
-                        }
-
-                        this.setState({
-                            reg_email_error: true,
-                            reg_email_valid: false,
-                            reg_email_error_text: error
-                        })
-
-                    }
-                    if(response.data.MESSAGE.hasOwnProperty('phone')) {
-
-                        let error = '';
-
-                        if(response.data.MESSAGE.phone == 'Введите номер телефона') {
-                            error = this.state.language.reg_phone_error_text1
-                        }
-
-                        this.setState({
-                            reg_phone_error: true,
-                            reg_phone_valid:false,
-                            reg_phone_error_text: error
-                        })
-
+                    if(encrypte_response.MESSAGE.email == 'Введите почту') {
+                        error = _this.state.language.reg_email_error_text1
+                    } else if(encrypte_response.MESSAGE.email == 'Почта введена не верно') {
+                        error = _this.state.language.reg_email_error_text2
                     }
 
-                    if(response.data.MESSAGE.hasOwnProperty('login')) {
-
-                        this.setState({
-                            reg_login_error: true,
-                            reg_login_error_text: response.data.MESSAGE.login
-                        })
-
-                    }
-
-
-                    if(response.data.MESSAGE.hasOwnProperty('pass')) {
-
-                        let error = '';
-
-                        if(response.data.MESSAGE.pass == 'Введите пароль') {
-                            error = this.state.language.reg_password_error_text1
-                        } else if(response.data.MESSAGE.pass == 'Пароль должно быть не менее 6 символов') {
-                            error = this.state.language.reg_password_error_text2
-                        }
-
-                        this.setState({
-                            reg_password_error: true,
-                            reg_password_error_text: error
-                        })
-
-                    }
-
-                    if(response.data.MESSAGE.hasOwnProperty('passConfirm')) {
-
-                        let error = '';
-
-                        if(response.data.MESSAGE.passConfirm == 'Пароли должны совпадать') {
-                            error = this.state.language.reg_confirm_password_error_text
-                        }
-
-
-                        this.setState({
-                            reg_confirm_password_error: true,
-                            reg_confirm_password_error_text: error
-                        })
-
-                    }
-
+                    this.setState({
+                        reg_email_error: true,
+                        reg_email_valid: false,
+                        reg_email_error_text: error
+                    })
 
                 }
-                // if (response.status === 200  ) {
-                //     let foundUser = {
-                //         email: response.data.user.email,
-                //         name: response.data.user.name,
-                //         token: response.data.user.token,
-                //         language: this.state.language
-                //     }
-                //
-                //     this.context.signIn(foundUser);
-                //
-                // }
-            },
+                if(encrypte_response.MESSAGE.hasOwnProperty('phone')) {
 
-            (err) => {
-                console.log(err.response.data, 'err')
-            },
+                    let error = '';
 
-        );
+                    if(encrypte_response.MESSAGE.phone == 'Введите номер телефона') {
+                        error = _this.state.language.reg_phone_error_text1
+                    }
 
+                    this.setState({
+                        reg_phone_error: true,
+                        reg_phone_valid:false,
+                        reg_phone_error_text: error
+                    })
+
+                }
+
+                if(encrypte_response.MESSAGE.hasOwnProperty('login')) {
+
+                    this.setState({
+                        reg_login_error: true,
+                        reg_login_error_text: encrypte_response.MESSAGE.login
+                    })
+
+                }
+
+
+                if(encrypte_response.MESSAGE.hasOwnProperty('pass')) {
+
+                    let error = '';
+
+                    if(encrypte_response.MESSAGE.pass == 'Введите пароль') {
+                        error = _this.state.language.reg_password_error_text1
+                    } else if(encrypte_response.MESSAGE.pass == 'Пароль должно быть не менее 6 символов') {
+                        error = _this.state.language.reg_password_error_text2
+                    }
+
+                    this.setState({
+                        reg_password_error: true,
+                        reg_password_error_text: error
+                    })
+
+                }
+
+                if(encrypte_response.MESSAGE.hasOwnProperty('passConfirm')) {
+
+                    let error = '';
+
+                    if(encrypte_response.MESSAGE.passConfirm == 'Пароли должны совпадать') {
+                        error = _this.state.language.reg_confirm_password_error_text
+                    }
+
+                    _this.setState({
+                        reg_confirm_password_error: true,
+                        reg_confirm_password_error_text: error
+                    })
+
+                }
+
+                _this.sysEvents(sys_request_detail, true, function () {
+
+                })
+
+            }
+
+        })
+
+
+        //
+        // axios.post('https://qr-gid.by/api/auth/register/', req).then(
+        //    async (response)  => {
+        //
+        //         console.log(response.data, 'register response')
+        //
+        //         if(response.data.TYPE == "OK") {
+        //
+        //             let userToken = response.headers['set-cookie'];
+        //             let userId = response.data.ID;
+        //
+        //             // clear register form data
+        //
+        //             await this.clearRegisterForm();
+        //
+        //             let foundUser = {
+        //                 token: userToken,
+        //                 userId:userId,
+        //                 // language: 'ru',
+        //                 email: login,
+        //                 password: pass
+        //             }
+        //
+        //             this.sysEvents(sys_request_detail, false, function () {
+        //                 this.context.signIn(foundUser, function () {
+        //                     navigate.navigate('Profile')
+        //                 });
+        //             })
+        //
+        //
+        //             return false;
+        //
+        //         } else if (response.data.TYPE == 'Error') {
+        //
+        //             if(response.data.MESSAGE.hasOwnProperty('email')) {
+        //
+        //                 let error = '';
+        //
+        //                 if(response.data.MESSAGE.email == 'Введите почту') {
+        //                     error = this.state.language.reg_email_error_text1
+        //                 } else if(response.data.MESSAGE.email == 'Почта введена не верно') {
+        //                     error = this.state.language.reg_email_error_text2
+        //                 }
+        //
+        //                 this.setState({
+        //                     reg_email_error: true,
+        //                     reg_email_valid: false,
+        //                     reg_email_error_text: error
+        //                 })
+        //
+        //             }
+        //             if(response.data.MESSAGE.hasOwnProperty('phone')) {
+        //
+        //                 let error = '';
+        //
+        //                 if(response.data.MESSAGE.phone == 'Введите номер телефона') {
+        //                     error = this.state.language.reg_phone_error_text1
+        //                 }
+        //
+        //                 this.setState({
+        //                     reg_phone_error: true,
+        //                     reg_phone_valid:false,
+        //                     reg_phone_error_text: error
+        //                 })
+        //
+        //             }
+        //
+        //             if(response.data.MESSAGE.hasOwnProperty('login')) {
+        //
+        //                 this.setState({
+        //                     reg_login_error: true,
+        //                     reg_login_error_text: response.data.MESSAGE.login
+        //                 })
+        //
+        //             }
+        //
+        //
+        //             if(response.data.MESSAGE.hasOwnProperty('pass')) {
+        //
+        //                 let error = '';
+        //
+        //                 if(response.data.MESSAGE.pass == 'Введите пароль') {
+        //                     error = this.state.language.reg_password_error_text1
+        //                 } else if(response.data.MESSAGE.pass == 'Пароль должно быть не менее 6 символов') {
+        //                     error = this.state.language.reg_password_error_text2
+        //                 }
+        //
+        //                 this.setState({
+        //                     reg_password_error: true,
+        //                     reg_password_error_text: error
+        //                 })
+        //
+        //             }
+        //
+        //             if(response.data.MESSAGE.hasOwnProperty('passConfirm')) {
+        //
+        //                 let error = '';
+        //
+        //                 if(response.data.MESSAGE.passConfirm == 'Пароли должны совпадать') {
+        //                     error = this.state.language.reg_confirm_password_error_text
+        //                 }
+        //
+        //
+        //                 this.setState({
+        //                     reg_confirm_password_error: true,
+        //                     reg_confirm_password_error_text: error
+        //                 })
+        //
+        //             }
+        //
+        //             this.sysEvents(sys_request_detail, true, function () {
+        //
+        //             })
+        //
+        //         }
+        //         // if (response.status === 200  ) {
+        //         //     let foundUser = {
+        //         //         email: response.data.user.email,
+        //         //         name: response.data.user.name,
+        //         //         token: response.data.user.token,
+        //         //         language: this.state.language
+        //         //     }
+        //         //
+        //         //     this.context.signIn(foundUser);
+        //         //
+        //         // }
+        //     },
+        //
+        //     (err) => {
+        //         console.log(err.response.data, 'err')
+        //     },
+        //
+        // );
+        //
 
 
 
@@ -593,8 +693,8 @@ export default class App extends Component {
                 console.log("ERROR " , error)
             })
             .then(async (responseData) => {
-                console.log(responseData, 'responseData')
-                console.log(url, 'url')
+                // console.log(responseData, 'responseData')
+                // console.log(url, 'url')
                 await this.setState({
                     politic_text: responseData
                 })
@@ -630,82 +730,273 @@ export default class App extends Component {
     }
 
 
-    decrypte () {
+    // decrypte () {
+    //
+    //     let CryptoJS = require("crypto-js");
+    //     let data = {"ciphertext":"q1aXE+ZoT2bYJJZF6RQMmjyDf0yzju4e9SRuXC4M7HM=","iv":"01cab2f8813181204cd444f20e9e5598","salt":"07c6712b27fd1323b1d76733783e3c0608d14c5a7ce86966b6e84a27ca0838ea4b20f78f6f30803bf0a4e643a33c3ea4d45deb78fe6874607cfe68d7b0aa4e745af8d02b5d13f1d657e1346237dea9117f44509aa012323bdd6a7267a7c8a470cb82b175394fb3ba8fdb1c88cd6954f49a6faa8c3b785d42abc7866eb18e463b04f311d93caf0114c4158f9316278fd0fa8b1032434d598d9222b8533fecdf1383048a8e32e21962abab2654e2987ac32ad89b8f1c9d098a29f8d6b95466e5881c5d5f9d4bad6de35585432b37cd7548415a20544f2013a66fc1c87b263827f0bafe3d298c1139326fb85fdf870aa9329d5dee96e2c7a4d44a3d205522eb9f83"}
+    //     let passphrase_ = 'test';
+    //     var salt = CryptoJS.enc.Hex.parse(data.salt);
+    //     var iv = CryptoJS.enc.Hex.parse(data.iv);
+    //     var key = CryptoJS.PBKDF2(passphrase_, salt, { hasher: CryptoJS.algo.SHA512, keySize: 64/8, iterations: 999});
+    //
+    //     var decrypted = CryptoJS.AES.decrypt(data.ciphertext, key, { iv: iv});
+    //     let decrypt =  decrypted.toString(CryptoJS.enc.Utf8);
+    //
+    //     console.log(decrypt, 'decrypt')
+    // }
 
-        let CryptoJS = require("crypto-js");
+    // encrypt(string, key){
 
-        let data = {"ciphertext":"q1aXE+ZoT2bYJJZF6RQMmjyDf0yzju4e9SRuXC4M7HM=","iv":"01cab2f8813181204cd444f20e9e5598","salt":"07c6712b27fd1323b1d76733783e3c0608d14c5a7ce86966b6e84a27ca0838ea4b20f78f6f30803bf0a4e643a33c3ea4d45deb78fe6874607cfe68d7b0aa4e745af8d02b5d13f1d657e1346237dea9117f44509aa012323bdd6a7267a7c8a470cb82b175394fb3ba8fdb1c88cd6954f49a6faa8c3b785d42abc7866eb18e463b04f311d93caf0114c4158f9316278fd0fa8b1032434d598d9222b8533fecdf1383048a8e32e21962abab2654e2987ac32ad89b8f1c9d098a29f8d6b95466e5881c5d5f9d4bad6de35585432b37cd7548415a20544f2013a66fc1c87b263827f0bafe3d298c1139326fb85fdf870aa9329d5dee96e2c7a4d44a3d205522eb9f83"}
-        let passphrase_ = 'test';
-        var salt = CryptoJS.enc.Hex.parse(data.salt);
-        var iv = CryptoJS.enc.Hex.parse(data.iv);
-        var key = CryptoJS.PBKDF2(passphrase_, salt, { hasher: CryptoJS.algo.SHA512, keySize: 64/8, iterations: 999});
+        // var CryptoJS = require("crypto-js");
+        // let plaintext = 'Hello';
+        // let keyMaterial = '12345';
+        // let ivMaterial = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]
 
-        var decrypted = CryptoJS.AES.decrypt(data.ciphertext, key, { iv: iv});
-        let decrypt =  decrypted.toString(CryptoJS.enc.Utf8);
+        // let truncHexKey = CryptoJS.SHA256(keyMaterial).toString().substr(0, 32); // hex encode and truncate
+        // let truncHexIV = CryptoJS.SHA256(ivMaterial).toString().substr(0, 16); // hex encode and truncate
+        // let key = CryptoJS.enc.Utf8.parse(truncHexKey);
+        // let iv = CryptoJS.enc.Utf8.parse(truncHexIV);
+        // let ciphertext = CryptoJS.AES.encrypt(plaintext, key, {iv: iv}); // default values: CBC, PKCS#7 padding
 
-        console.log(decrypt, 'decrypt')
+        // console.log('Ciphertext: ' + ciphertext.toString());
+        // console.log('key: ' + key);
+        // console.log('iv: ' + iv);
+
+    // }
+
+    //  getRandomWordArray = () => {
+    //      // let CryptoJS = require("crypto-js");
+    //
+    //     const values = new Uint32Array(8);
+    //     crypto.getRandomValues(values);
+    //      // getRandomBytes(values);
+    //
+    //      const words = Array.from(values);
+    //     return CryptoJS.lib.WordArray.create(words);
+    // };
+
+    loginHandle  = async () => {
+
+        let login = this.state.login;
+        let password = this.state.password;
+
+        let sys_request_detail = JSON.stringify({
+            url: 'https://qr-gid.by/api/auth/login/',
+            data: {
+                login:login,
+                pass: password,
+            }
+        })
+
+        const req = {
+            login: login,
+            pass: password,
+        };
+
+        let _this = this;
+
+        //
+        // sendEncryptData('https://qr-gid.by/api/auth/login/', req, function (encrypte_response){
+        //     console.log( encrypte_response, 'encrypte_response')
+        // })
+
+
+        sendEncryptData('https://qr-gid.by/api/auth/login/', req, function (response, encrypte_response){
+            console.log( encrypte_response, 'encrypte_response')
+
+            if(encrypte_response.hasOwnProperty('TYPE') ) {
+
+                if (encrypte_response.TYPE == 'ERROR') {
+                    _this.setState({
+                        login_error: true,
+                        login_valid:false,
+                        password_error: true,
+                        password_valid:false,
+                    })
+
+                    _this.sysEvents(sys_request_detail, true, function () {
+                        console.log('login sysEvents sended')
+                    })
+                }
+
+            } else {
+
+                Keyboard.dismiss()
+
+                _this.setState({
+                    login_error: false,
+                    login_valid:false,
+                    password_error: false,
+                    password_valid:false,
+                    login: '',
+                    password: ''
+                })
+
+                let userToken = response.headers['set-cookie'];
+                let userId    = encrypte_response.ID;
+
+                let foundUser = {
+                    token: userToken,
+                    userId: userId,
+                    // language: 'ru',
+                    email: login,
+                    password: password
+                }
+
+                _this.sysEvents(sys_request_detail, false, function () {
+                    let navigate = _this.props.navigation;
+                    _this.context.signIn(foundUser, function () {
+                        navigate.navigate('Profile')
+                    });
+                })
+
+            }
+        })
+
+
+
+
+        // axios.post('https://qr-gid.by/api/auth/login/', req).then(
+        //     (response) => {
+        //
+        //         console.log(response.data, 'dddddd')
+        //         if(response.data.hasOwnProperty('TYPE') ) {
+        //
+        //             if (response.data.TYPE == 'ERROR') {
+        //                 _this.setState({
+        //                     login_error: true,
+        //                     login_valid:false,
+        //                     password_error: true,
+        //                     password_valid:false,
+        //                 })
+        //
+        //                 this.sysEvents(sys_request_detail, true, function () {
+        //
+        //                 })
+        //             }
+        //
+        //         } else {
+        //
+        //             Keyboard.dismiss()
+        //
+        //             _this.setState({
+        //                 login_error: false,
+        //                 login_valid:false,
+        //                 password_error: false,
+        //                 password_valid:false,
+        //                 login: '',
+        //                 password: ''
+        //             })
+        //
+        //             let userToken = response.headers['set-cookie'];
+        //             let userId    = response.data.ID;
+        //
+        //             let foundUser = {
+        //                 token: userToken,
+        //                 userId: userId,
+        //                 // language: 'ru',
+        //                 email: login,
+        //                 password: password
+        //             }
+        //
+        //             this.sysEvents(sys_request_detail, false, function () {
+        //                 let navigate = _this.props.navigation;
+        //                 _this.context.signIn(foundUser, function () {
+        //                     navigate.navigate('Profile')
+        //                 });
+        //             })
+        //
+        //         }
+        //
+        //     },
+        //
+        //     (err) => {
+        //         console.log(err.response.data, 'ERROR loginHandle')
+        //     },
+        //
+        // );
+        //
+
+
     }
 
-    encrypt(string, key){
-        var CryptoJS = require("crypto-js");
 
-        var plaintext = string;
-        var keyMaterial = key;
-        var ivMaterial = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]
+    // sendEncryptData = (url, data_info, callback) =>
+    // {
+    //     let data = {};
+    //     let arr = JSON.stringify({
+    //         "url":"https://qr-gid.by/api/version/",
+    //         // "url":url,
+    //         "data": ''
+    //     }); //массив из ссылки на апи url и данных запроса data
+    //     let key = '12345'; //https://qr-gid.by/api/key.php
+    //
+    //     key = CryptoJS.enc.Utf8.parse(CryptoJS.SHA256(key).toString().substr(0, 32));
+    //     let iv = CryptoJS.enc.Utf8.parse(CryptoJS.SHA256([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]).toString().substr(0, 16));
+    //     let encrypted = CryptoJS.AES.encrypt(arr, key, {iv: iv});
+    //
+    //     data.request = CryptoJS.enc.Base64.stringify(encrypted.ciphertext);
+    //     data.iv = CryptoJS.enc.Hex.stringify(iv);
+    //
+    //     // callback('test');
+    //
+    //     axios.post('https://qr-gid.by/api/request_app.php', JSON.stringify(data))
+    //         .then(response => {
+    //
+    //             console.log(response.data, 'response.data REQUEST');
+    //             console.log( this.decryptData(response.data, '12345', iv), 'this.decryptData');
+    //             callback(this.decryptData(response.data, '12345', iv))
+    //
+    //         })
+    //         .catch(error => console.log(error));
+    //     //
+    //     // $.post("https://qr-gid.by/api/request_app.php", JSON.stringify(data), function(data){ //отправка шифрованных данных в систему
+    //     //
+    //     //     let decrypted = CryptoJS.AES.decrypt(data, key, {iv: iv});
+    //     //     let result = JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
+    //     //     console.log(result); //полученный результат из системы
+    //     //
+    //     // }, "json");
+    //
+    //
+    //     console.log(data, 'datadatadatadatadata')
+    // }
 
-        var truncHexKey = CryptoJS.SHA256(keyMaterial).toString().substr(0, 32); // hex encode and truncate
-        var truncHexIV = CryptoJS.SHA256(ivMaterial).toString().substr(0, 16); // hex encode and truncate
-        var key = CryptoJS.enc.Utf8.parse(truncHexKey);
-        var iv = CryptoJS.enc.Utf8.parse(truncHexIV);
-        var ciphertext = CryptoJS.AES.encrypt(plaintext, key, {iv: iv}); // default values: CBC, PKCS#7 padding
+    // decryptData = (encryptedData, key, iv) =>  {
+    //
+    //     key = CryptoJS.enc.Utf8.parse(CryptoJS.SHA256(key).toString().substr(0, 32));
+    //     iv = CryptoJS.enc.Hex.parse(iv);
+    //     let cipherParams = CryptoJS.lib.CipherParams.create({
+    //         ciphertext: CryptoJS.enc.Base64.parse(encryptedData),
+    //         iv: iv,
+    //     });
+    //     let decrypted = CryptoJS.AES.decrypt(cipherParams, key, {
+    //         iv: iv,
+    //     });
+    //     return decrypted.toString(CryptoJS.enc.Utf8);
+    //
+    // }
 
-        console.log('Ciphertext: ' + ciphertext.toString());
-    }
 
     componentDidMount() {
 
         // this.decrypte()
-        // this.encrypt('My text from react native', '12345')
+        // this.encrypt(JSON.stringify({'url':'dwqd',"data":[]}), '12345')
+        // let CryptoJS = require("crypto-js");
 
-        // var mytexttoEncryption = "Hello";
-        // const encrypted = CryptoES.AES.encrypt(mytexttoEncryption ,"test").toString();
-        // console.log(encrypted, 'encrypted')
-        // var CryptoJS = require("crypto-js");
-        //
-        //
-        //
-        // const crypto = require('crypto-js');
-        //
-        // const result = '...'; // the encrypted data
-        // const key = '...'; // the encryption key
-        // // const iv = Buffer.alloc(16, 0); // assuming the IV is all zeroes
-        //
-        // const decipher = crypto.createDecipheriv('aes-192-cbc', key);
-        // let decrypted = decipher.update(result, 'hex', 'utf8');
-        // decrypted += decipher.final('utf8');
-        // console.log(decrypted, 'decrypted');
-
-        // var decrypted = CryptoJS.AES.decrypt(
-        //     '4DtAO3eWoZb5Am6CDI0jtKv/fRkFPXuCnLVdiKTvdYtW0gIJv/JR9G+uVNvG+a1GMhe+Mzl9VJqhtChyqQklOo5o+rqxLpY10MArldVBdqlRsGa3Pjckhhl8TRpeMBB6BXajgAMJWZFcu+SEMBtrV/1MOx6i/Jk9qmb1T4TZ5mAfpX2+1mHkrJdMCJMrgTqOFsgG2zlv6FxvbQIjrIRxLw==',
-        //    'test'
-        // ).toString(CryptoJS.enc.Utf8);
-        //
-        // console.log(decrypted, 'decrypted')
-
-
-        //
-        // var decrypted = CryptoJS.AES.decrypt(
-        //     '4DtAO3eWoZb5Am6CDI0jtKv/fRkFPXuCnLVdiKTvdYtW0gIJv/JR9G+uVNvG+a1GMhe+Mzl9VJqhtChyqQklOo5o+rqxLpY10MArldVBdqlRsGa3Pjckhhl8TRpeMBB6BXajgAMJWZFcu+SEMBtrV/1MOx6i/Jk9qmb1T4TZ5mAfpX2+1mHkrJdMCJMrgTqOFsgG2zlv6FxvbQIjrIRxLw==',
-        //    '12345'
-        // ).toString(CryptoJS.enc.Utf8);
-        //
-        // console.log(decrypted, 'decrypted')
-        //
-
-
+        // this.sendEncryptData();
 
         const { navigation } = this.props;
         this.focusListener = navigation.addListener("focus", () => {
+
+            axios.get('https://api.ipify.org?format=json')
+            .then(response => {
+                this.setState({
+                    ipAddress: response.data.ip
+                })
+                console.log(response.data, 'response.data')
+            })
+            .catch(error => console.log(error));
 
             this.loadFunction();
 
@@ -822,8 +1113,6 @@ export default class App extends Component {
                 }
             }
         }
-
-
 
     }
 
@@ -960,7 +1249,6 @@ export default class App extends Component {
 
 
     //Login LOGIN input
-
     clearLoginloginInput = () => {
 
         this.setState({
@@ -972,7 +1260,6 @@ export default class App extends Component {
     }
 
     //Login Password input
-
     clearLoginPasswordInput = () => {
 
         this.setState({
@@ -987,7 +1274,6 @@ export default class App extends Component {
 
 
     // Reset password EMAIL input
-
     clearResetPassEmailInput = () => {
 
         this.setState({
@@ -1053,7 +1339,6 @@ export default class App extends Component {
 
     onBlurRegisterEmail = () => {
 
-
         let reg_email = this.state.reg_email
 
         if (reg_email == '' || !reg_email) {
@@ -1072,8 +1357,6 @@ export default class App extends Component {
     }
 
     onBlurResetPassEmail = () => {
-
-        console.log('test')
 
         let reset_pass_email = this.state.reset_pass_email
 
@@ -1149,6 +1432,15 @@ export default class App extends Component {
             PHONE: this.state.reset_pass_phone,
         }
 
+        let sys_request_detail = JSON.stringify({
+            url: 'https://qr-gid.by/api/auth/forgotPass/',
+            data: {
+                EMAIL:this.state.reset_pass_email,
+                PHONE: this.state.reset_pass_phone,
+            }
+        })
+
+
         axios.post('https://qr-gid.by/api/auth/forgotPass/', req).then(
             (response) => {
 
@@ -1161,9 +1453,17 @@ export default class App extends Component {
                         reset_password_success:true
                     })
 
+                     this.sysEvents(sys_request_detail, false, function () {
+
+                     })
+
                     // alert('New password - '+response.data.PASS )
                 }
                 else if (response.data.TYPE == 'ERROR') {
+
+                    this.sysEvents(sys_request_detail, true, function () {
+
+                    })
 
                     console.log('forgotPass Error')
 
@@ -1210,7 +1510,7 @@ export default class App extends Component {
             },
 
             (err) => {
-                console.log(err.response.data, 'err')
+                console.log(err.response.data, 'ERROR sendResetPasswordCode')
 
 
             },

@@ -476,7 +476,6 @@ export default class App extends React.Component {
             if(selected_oblast_and_region.hasOwnProperty('selected_oblast'))
             {
 
-
                 console.log('selected_oblast KAAAAAAAA')
                 let url = 'https://qr-gid.by/api/search/region/';
 
@@ -538,13 +537,17 @@ export default class App extends React.Component {
                                         state_data.push(new_data[new_data_item]);
                                     }
                                 }
-
-                                 region_gps = selected_oblast_and_region.region_gps;
-                                 region_gps = region_gps.replace(/\s/g, '');
-                                 new_region_gps = region_gps.split(',');
+                                 //
+                                 // region_gps = selected_oblast_and_region.region_gps;
+                                 // region_gps = region_gps.replace(/\s/g, '');
+                                 // new_region_gps = region_gps.split(',');
 
                             }
 
+
+                            region_gps = selected_oblast_and_region.region_gps;
+                            region_gps = region_gps.replace(/\s/g, '');
+                            new_region_gps = region_gps.split(',');
 
                             this.setState({
                                 object_items: state_data,
@@ -1141,7 +1144,7 @@ export default class App extends React.Component {
                 break;
         }
 
-        
+
 
         return (
             returnIcon
@@ -1885,8 +1888,8 @@ export default class App extends React.Component {
                             showsBuildings
                             zoomControlEnabled={true}
                             initialRegion={{
-                                latitude: this.state.region_gps.length > 0 ? parseFloat(this.state.region_gps[0]) : 53.906187,
-                                longitude: this.state.region_gps.length > 0 ? parseFloat(this.state.region_gps[1]) : 27.416621,
+                                latitude: this.state.region_gps && this.state.region_gps.length > 0 ? parseFloat(this.state.region_gps[0]) : 53.906187,
+                                longitude: this.state.region_gps && this.state.region_gps.length > 0 ? parseFloat(this.state.region_gps[1]) : 27.416621,
 
                                 // latitude: 53.901459,
                                 // longitude: 27.562087,
