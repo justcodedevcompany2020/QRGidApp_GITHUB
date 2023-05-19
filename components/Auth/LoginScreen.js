@@ -386,9 +386,13 @@ export default class App extends Component {
                         error = _this.state.language.reg_email_error_text1
                     } else if(encrypte_response.MESSAGE.email == 'Почта введена не верно') {
                         error = _this.state.language.reg_email_error_text2
+                    } else if(encrypte_response.MESSAGE.email == 'Такой адрес почты уже занят') {
+                        error = 'Такой адрес почты уже занят'
+                        error = _this.state.language.reg_email_error_exist
+
                     }
 
-                    this.setState({
+                    _this.setState({
                         reg_email_error: true,
                         reg_email_valid: false,
                         reg_email_error_text: error
@@ -403,7 +407,7 @@ export default class App extends Component {
                         error = _this.state.language.reg_phone_error_text1
                     }
 
-                    this.setState({
+                    _this.setState({
                         reg_phone_error: true,
                         reg_phone_valid:false,
                         reg_phone_error_text: error
@@ -413,7 +417,7 @@ export default class App extends Component {
 
                 if(encrypte_response.MESSAGE.hasOwnProperty('login')) {
 
-                    this.setState({
+                    _this.setState({
                         reg_login_error: true,
                         reg_login_error_text: encrypte_response.MESSAGE.login
                     })
@@ -431,7 +435,7 @@ export default class App extends Component {
                         error = _this.state.language.reg_password_error_text2
                     }
 
-                    this.setState({
+                    _this.setState({
                         reg_password_error: true,
                         reg_password_error_text: error
                     })
@@ -844,6 +848,8 @@ export default class App extends Component {
                 }
 
                 _this.sysEvents(sys_request_detail, false, function () {
+
+                    console.log('LOGIIIIN')
                     let navigate = _this.props.navigation;
                     _this.context.signIn(foundUser, function () {
                         navigate.navigate('Profile')
@@ -3079,12 +3085,10 @@ export default class App extends Component {
                             }}>
 
                                 <TouchableOpacity style={styles.register_button} onPress={() => this.registerHandle()}>
-
                                     <Text style={styles.register_button_text} >
                                         {/*Зарегистрироваться*/}
                                         {this.state.language.sign_up}
                                     </Text>
-
                                 </TouchableOpacity>
 
                             </View>

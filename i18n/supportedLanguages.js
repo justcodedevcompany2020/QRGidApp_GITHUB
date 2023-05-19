@@ -183,7 +183,7 @@ const ru = {
     cancel: 'ОТМЕНА',
     reg_email_error_text1: 'Введите почту',
     reg_email_error_text2: 'Почта введена не верно',
-
+    reg_email_error_exist: 'Такой адрес почты уже занят',
     reg_phone_error_text1: 'Введите номер телефона',
     reg_password_error_text1: 'Введите пароль',
     reg_password_error_text2: 'Пароль должно быть не менее 6 символов',
@@ -224,7 +224,7 @@ const bel = {
     select_btn: 'ВЫБРАЦЬ',
     why: 'НАВОШТА?',
     why_desc: 'Выберыце рэгіён, які вы плануеце наведаць, каб убачыць аб\'екты на карце.',
-    edit_profile: 'ЗМЯНІЦЬ ПРОФІЛЬ',
+    edit_profile: 'Выдаліць профіль',
 
     change_photo: 'ЗМЯНІЦЬ ФОТА',
     audiogid: 'АЎДЫЁГІД',
@@ -378,6 +378,8 @@ const bel = {
     reset_pass_phone_text2: 'Такі нумар тэлефона не існуе',
     reg_email_error_text3: 'Павінна быць запоўнена толькі адно поле',
     reset_pass_phone_text3: 'Павінна быць запоўнена толькі адно поле',
+    reg_email_error_exist: 'Такі адрас пошты ўжо заняты',
+
 };
 
 const en = {
@@ -556,6 +558,7 @@ const en = {
     reset_pass_phone_text2: 'This phone number does not exist',
     reg_email_error_text3: 'Only one field must be filled',
     reset_pass_phone_text3: 'Only one field must be filled in',
+    reg_email_error_exist: 'This email address is already taken',
 };
 
 export { ru, bel, en};

@@ -799,7 +799,7 @@ export default class App extends React.Component {
             IsLoadedUserInfo: false
         })
 
-        sendEncryptData(`https://qr-gid.by/api/auth/profile?ID=${userId}`, '', function (response, encrypte_response){
+        sendEncryptData(`https://qr-gid.by/api/auth/profile/`, {ID:userId}, function (response, encrypte_response){
 
             let data = encrypte_response;
 
@@ -818,23 +818,23 @@ export default class App extends React.Component {
                 })
 
                 _this.setState({
-                    AGE:data.AGE,
-                    edit_birth:data.BIRTHDAY,
-                    CITY:data.CITY,
-                    COUNTRY:data.COUNTRY,
-                    EMAIL:data.EMAIL,
-                    GENDER:data.GENDER,
-                    LOGIN:data.LOGIN,
-                    NAME:data.NAME,
-                    PHONE:data.PHONE,
-                    PHOTO:data.PHOTO,
-                    edit_login: data.LOGIN,
-                    edit_fio: data.NAME,
-                    edit_phone: data.PHONE,
-                    edit_phone_masked: data.PHONE,
-                    edit_email: data.EMAIL,
-                    edit_country: data.COUNTRY,
-                    edit_city: data.CITY
+                    AGE:data?.AGE,
+                    edit_birth:data?.BIRTHDAY,
+                    CITY:data?.CITY,
+                    COUNTRY:data?.COUNTRY,
+                    EMAIL:data?.EMAIL,
+                    GENDER:data?.GENDER,
+                    LOGIN:data?.LOGIN,
+                    NAME:data?.NAME,
+                    PHONE:data?.PHONE,
+                    PHOTO:data?.PHOTO,
+                    edit_login: data?.LOGIN,
+                    edit_fio: data?.NAME,
+                    edit_phone: data?.PHONE,
+                    edit_phone_masked: data?.PHONE,
+                    edit_email: data?.EMAIL,
+                    edit_country: data?.COUNTRY,
+                    edit_city: data?.CITY
                 })
 
                 if (data.GENDER !== null) {
@@ -849,7 +849,7 @@ export default class App extends React.Component {
                         })
 
                     } else if(data.GENDER == 'Мужчина' || data.GENDER == 'Мужчына' || data.GENDER == 'Man' ) {
-                        this.setState({
+                        _this.setState({
                             sex_woman: false,
                             sex_man: true,
                             GENDER: _this.state.language.man
@@ -1028,6 +1028,7 @@ export default class App extends React.Component {
         sendEncryptData('https://qr-gid.by/api/auth/profile/edit.php', req, async function (response, encrypte_response) {
 
             let data = encrypte_response;
+            console.log(data, 'encrypte_response')
 
             if (data.TYPE == 'ERROR') {
 
@@ -1256,15 +1257,11 @@ export default class App extends React.Component {
 
                         })
                     }
-
                     console.log(data, 'data')
-
                 },
 
                 (err) => {
                     console.log(err.response.data, 'err')
-
-
                 },
 
             );
@@ -1574,6 +1571,8 @@ export default class App extends React.Component {
             })
             .then((response) =>
             {
+                console.log(response, 'responseresponse')
+                return false;
                 if (response.success === true)
                 {
                     this.setState({
@@ -1631,11 +1630,7 @@ export default class App extends React.Component {
                 {/*Edit modal start*/}
 
                     {this.state.isOpenEditModal &&
-
-                        <View style={[
-                            { width:'100%',height: '100%', position:'absolute', bottom:0, left:0, zIndex:5005, elevation:15},
-                                 // Platform.OS === 'ios' ? {height: windowHeight} : {}
-                            ]}>
+                        <View style={[{ width:'100%',height: '100%', position:'absolute', bottom:0, left:0, zIndex:5005, elevation:15},]}>
 
                             <TouchableOpacity onPress={() => {this.setState({isOpenEditModal:false})}} style={{ width:'100%', height:56 , elevation:16, zIndex:5005, }}></TouchableOpacity>
 
@@ -2847,12 +2842,9 @@ export default class App extends React.Component {
                             </View>
 
                         </View>
-
                     }
 
                 {/*Edit modal end*/}
-
-
 
 
                 {/*Open Menu Modal START*/}

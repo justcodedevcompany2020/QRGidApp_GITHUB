@@ -54,6 +54,7 @@ export const sendEncryptData = (url, data_info, callback) => {
             "url":url,
             "data": data_info
         });
+    console.log(arr,'arr')
         let key = '12345'; //https://qr-gid.by/api/key.php
 
         key = CryptoJS.enc.Utf8.parse(CryptoJS.SHA256(key).toString().substr(0, 32));
@@ -65,6 +66,7 @@ export const sendEncryptData = (url, data_info, callback) => {
 
         axios.post('https://qr-gid.by/api/request_app.php', JSON.stringify(data))
         .then(response => {
+            console.log(response.data, 'response.dataresponse.data')
             callback(response, decryptData(response.data, '12345', iv))
         })
         .catch(error => console.log(error));
