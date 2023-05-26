@@ -224,7 +224,8 @@ const bel = {
     select_btn: 'ВЫБРАЦЬ',
     why: 'НАВОШТА?',
     why_desc: 'Выберыце рэгіён, які вы плануеце наведаць, каб убачыць аб\'екты на карце.',
-    edit_profile: 'Выдаліць профіль',
+    // edit_profile: 'Выдаліць профіль',
+    edit_profile: 'Рэдагаваць профіль',
 
     change_photo: 'ЗМЯНІЦЬ ФОТА',
     audiogid: 'АЎДЫЁГІД',
@@ -335,7 +336,7 @@ const bel = {
     and_more: 'і вышэй',
     g: 'г.',
     location_required_text: 'Каб мець доступ да абекта, дайце доступ да лакацыі',
-    remove_profile: 'ВІДАЛІЦЬ ПРОФІЛЮ',
+    remove_profile: 'Выдаліць профіль',
     are_you_sure_you_want_to_delete_the_profile: 'Вы ўпэўненыя, што жадаеце выдаліць профіль?',
     write_feadback: 'Напішыце водзыў',
     rate_form_success_message: 'Дзякуй, ваша ацэнка прынята.',

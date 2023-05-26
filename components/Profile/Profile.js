@@ -1595,7 +1595,6 @@ export default class App extends React.Component {
             return null;
         }
 
-
         if (!this.state.imageLoaded) {
             return (
                 <View style={{width:'100%',height:'100%',justifyContent:'center',alignItems:'center', backgroundColor: 'white'}}>
@@ -1619,13 +1618,11 @@ export default class App extends React.Component {
 
             <SafeAreaView style={[styles.container1]}>
 
-
                 {/*custom StatusBar*/}
                 {/*    <View style={ { backgroundColor:"white", height: this.state.STATUSBAR_HEIGHT }}>*/}
                 {/*        <StatusBar translucent backgroundColor={"white"} barStyle="dark-content" />*/}
                 {/*    </View>*/}
                 {/*custom StatusBar*/}
-
 
                 {/*Edit modal start*/}
 
@@ -1651,7 +1648,6 @@ export default class App extends React.Component {
                                                     fill="#1D1D20"
                                                 />
                                             </Svg>
-
                                         </TouchableOpacity>
 
                                     }
