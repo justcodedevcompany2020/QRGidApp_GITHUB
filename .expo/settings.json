@@ -5,6 +5,6 @@
   "minify": false,
   "urlRandomness": "wb-k5z",
   "https": false,
-  "scheme": "exp+qrgid",
-  "devClient": false
+  "devClient": true,
+  "scheme": "exp+qrgid"
 }

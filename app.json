@@ -2,7 +2,7 @@
   "expo": {
     "name": "QR_GID",
     "slug": "qr_gid",
-    "version": "18.0.0",
+    "version": "21.0.0",
     "orientation": "portrait",
     "icon": "./assets/android_logotwo.png",
     "splash": {
@@ -22,7 +22,7 @@
         "googleMapsApiKey": "AIzaSyAvTddoHzPpejdOPc3kX6-EBvZcAmD_sFg"
       },
       "bundleIdentifier": "com.JustCode.QRGIDJ",
-      "buildNumber": "18.0.0",
+      "buildNumber": "21.0.0",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This application needs access to your location data so that you can see objects on the map, as well as information about them on a separate page.",
         "NSCameraUsageDescription": "This app needs access to your camera in order to scan the QR code and access the property."
@@ -44,7 +44,7 @@
         "ACCESS_FINE_LOCATION",
         "android.permission.RECORD_AUDIO"
       ],
-      "versionCode": 18
+      "versionCode": 21
     },
     "web": {
       "favicon": "./assets/favicon.png"

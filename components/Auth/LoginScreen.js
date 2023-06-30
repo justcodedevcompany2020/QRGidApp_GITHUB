@@ -324,7 +324,8 @@ export default class App extends Component {
         };
 
         let sys_request_detail = JSON.stringify({
-            url: 'https://qr-gid.by/api/auth/profile/edit.php',
+            // url: 'https://qr-gid.by/api/auth/profile/edit.php',
+            url: 'https://qr-gid.by/api/auth/register/',
             data: req
         })
 
@@ -2519,164 +2520,18 @@ export default class App extends Component {
                                 {this.state.language.sign_up2}
                             </Text>
 
-                            <Svg
-                                style={this.state.isOpenRegisterModal ? {} : {
-                                    transform: [
-                                        { rotateZ: "180deg" }
-                                    ]
-                                }}
-                                width={24}  height={24}  viewBox="0 0 24 24"  fill="none"  xmlns="http://www.w3.org/2000/svg">
-                                <Path  d="M5 15l7-7 7 7"  stroke="#54535F"  strokeLinecap="round"  strokeLinejoin="round"/>
-                            </Svg>
+                            {this.state.isOpenRegisterModal ?
+                                <Image style={{}} source={require('../../assets/images/up.png')} />
+                                :
+                                <Image style={{transform: [{ rotate: '180deg' }]}} source={require('../../assets/images/up.png')} />
+                            }
+
 
                         </TouchableOpacity>
 
 
 
                         <ScrollView style={styles.registerFieldsWrapperScrollView}>
-
-
-                            {/*Login*/}
-
-                            {/*<View style={styles.inputWrapper}>*/}
-
-                            {/*    {this.state.reg_login_error &&*/}
-
-                            {/*        <TouchableOpacity style={styles.emptyInput}*/}
-                            {/*            onPress={()=>this.clearLoginInput()}*/}
-                            {/*        >*/}
-                            {/*            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >*/}
-                            {/*                <Path fillRule="evenodd" clipRule="evenodd" d="M23 12c0 6.075-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11zm1 0c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zM9.354 8.646a.5.5 0 10-.708.708L11.293 12l-2.647 2.646a.5.5 0 00.708.708L12 12.707l2.646 2.647a.5.5 0 00.708-.708L12.707 12l2.647-2.646a.5.5 0 00-.708-.708L12 11.293 9.354 8.646z" fill="#A4223C"/>*/}
-                            {/*            </Svg>*/}
-                            {/*        </TouchableOpacity>*/}
-
-                            {/*    }*/}
-
-                            {/*    {this.state.reg_login_valid &&*/}
-
-                            {/*        <TouchableOpacity style={styles.emptyInput}>*/}
-                            {/*            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >*/}
-                            {/*                <Path  fillRule="evenodd"  clipRule="evenodd"  d="M23 12c0 6.075-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11zm1 0c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-8.09-2.917a.66.66 0 01.442-.197.547.547 0 01.427.176c.248.228.248.62.02.87l-4.758 4.985a.626.626 0 01-.91-.02l-2.71-2.918a.62.62 0 01.041-.869.619.619 0 01.869.042l2.255 2.42 4.324-4.49z"  fill="#337363"/>*/}
-                            {/*            </Svg>*/}
-                            {/*        </TouchableOpacity>*/}
-
-                            {/*    }*/}
-
-
-                            {/*    <TextInput*/}
-                            {/*        value={this.state.reg_login}*/}
-                            {/*        onChangeText={(reg_login) => this.changeRegisterlogin(reg_login)}*/}
-                            {/*        style={[*/}
-
-                            {/*            styles.input,*/}
-                            {/*            this.state.reg_login_error && {*/}
-                            {/*                borderWidth:1, borderColor:'#A4223C'*/}
-                            {/*            },*/}
-                            {/*            this.state.reg_login_valid && {*/}
-                            {/*                borderWidth:1, borderColor:'#337363'*/}
-                            {/*            }*/}
-                            {/*        ]}*/}
-                            {/*        underlineColorAndroid ='transparent'*/}
-                            {/*        label={*/}
-                            {/*            <Text*/}
-                            {/*                style={[*/}
-                            {/*                    {color: !this.state.reg_login_error ? '#55545F' : '#A4223C'},*/}
-                            {/*                    {color: this.state.reg_login_valid ? '#337363' : '#55545F'},*/}
-                            {/*                ]*/}
-                            {/*                }>*/}
-                            {/*                Логин или e-mail <Text style={{color:'red'}}>*</Text>*/}
-                            {/*            </Text>*/}
-                            {/*        }*/}
-                            {/*        error={false}*/}
-                            {/*        onBlur={() => this.onBlurRegisterLogin()}*/}
-                            {/*        theme={{colors: {text: '#55545F', primary: 'transparent'}}}*/}
-                            {/*        underlineColor='transparent'*/}
-                            {/*        selectionColor='#E1C1B7'*/}
-                            {/*        activeOutlineColor='transparent'*/}
-
-                            {/*    />*/}
-
-
-                            {/*    {this.state.reg_login_error ?*/}
-
-                            {/*        <Text style={[styles.inp_buttom_label, {color:'#A4223C', marginBottom: 6, position:'absolute', bottom:-1}]}>*/}
-                            {/*            {this.state.reg_login_error_text}*/}
-                            {/*        </Text>*/}
-
-                            {/*        :*/}
-
-                            {/*        (*/}
-                            {/*            !this.state.reg_login_valid &&*/}
-                            {/*            <Text style={[styles.inp_buttom_label, { marginBottom: 6, position:'absolute', bottom:-1}]}>*/}
-                            {/*                Введите свой логин*/}
-                            {/*            </Text>*/}
-                            {/*        )*/}
-
-                            {/*    }*/}
-                            {/*</View>*/}
-
-                            {/*FIO*/}
-
-                            {/*<View style={styles.inputWrapper}>*/}
-
-                            {/*    {this.state.reg_fio_valid &&*/}
-
-                            {/*        <TouchableOpacity style={styles.emptyInput}>*/}
-                            {/*            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" >*/}
-                            {/*                <Path  fillRule="evenodd"  clipRule="evenodd"  d="M23 12c0 6.075-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11zm1 0c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-8.09-2.917a.66.66 0 01.442-.197.547.547 0 01.427.176c.248.228.248.62.02.87l-4.758 4.985a.626.626 0 01-.91-.02l-2.71-2.918a.62.62 0 01.041-.869.619.619 0 01.869.042l2.255 2.42 4.324-4.49z"  fill="#337363"/>*/}
-                            {/*            </Svg>*/}
-                            {/*        </TouchableOpacity>*/}
-
-                            {/*    }*/}
-
-                            {/*    <TextInput*/}
-                            {/*        value={this.state.reg_fio}*/}
-                            {/*        onChangeText={(reg_fio) => this.changeFio(reg_fio)}*/}
-                            {/*        underlineColorAndroid ='transparent'*/}
-                            {/*        label={*/}
-                            {/*            <Text*/}
-                            {/*                style={[*/}
-                            {/*                    {color: !this.state.reg_fio_error ? '#55545F' : '#A4223C'},*/}
-                            {/*                    {color: this.state.reg_fio_valid ? '#337363' : '#55545F'},*/}
-                            {/*                ]*/}
-                            {/*                }>*/}
-                            {/*                Ф. И. О*/}
-                            {/*            </Text>*/}
-                            {/*        }*/}
-                            {/*        error={false}*/}
-                            {/*        underlineColor='transparent'*/}
-                            {/*        style={[*/}
-
-                            {/*            styles.input,*/}
-                            {/*            this.state.reg_fio_valid && {*/}
-                            {/*                borderWidth:1, borderColor:'#337363'*/}
-                            {/*            }*/}
-                            {/*        ]}*/}
-                            {/*        theme={{colors: {text: '#55545F', primary: 'transparent'}}}*/}
-                            {/*        selectionColor='#E1C1B7'*/}
-
-                            {/*        activeOutlineColor='transparent'*/}
-                            {/*    />*/}
-
-
-                            {/*    {this.state.reg_fio_error ?*/}
-
-                            {/*        <Text style={[styles.inp_buttom_label, {color:'#A4223C',marginBottom: 6, position:'absolute', bottom:-1}]}>*/}
-                            {/*            Введите ФИО*/}
-                            {/*        </Text>*/}
-                            {/*        :*/}
-                            {/*        (*/}
-                            {/*            !this.state.reg_fio_valid &&*/}
-                            {/*            <Text style={[styles.inp_buttom_label, {marginBottom: 6, position:'absolute', bottom:-1}]}>*/}
-                            {/*                Введите фамилию, имя, отчество*/}
-                            {/*            </Text>*/}
-                            {/*        )*/}
-
-
-                            {/*    }*/}
-
-                            {/*</View>*/}
-
 
                             {/*Register Email START*/}
 
